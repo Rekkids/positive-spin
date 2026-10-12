@@ -647,7 +647,27 @@ function decode(str){
     };
   }catch(e){ return null; }
 }
-function shareUrl(c){ return location.origin + location.pathname + "?c=" + encode(c); }
+/* Short links: the compliment travels as its short ID; names and note as plain words.
+   e.g. /?c=k3j9xq&to=Sam&fr=Alex&n=Thinking+of+you */
+function shareUrl(c){
+  const q = new URLSearchParams({ c: cid(c.t) });
+  if (c.to) q.set("to", c.to);
+  if (c.fr) q.set("fr", c.fr);
+  if (c.n)  q.set("n", c.n);
+  return location.origin + location.pathname + "?" + q.toString();
+}
+function readIncoming(){
+  const q = new URLSearchParams(location.search), code = q.get("c");
+  if (!code) return null;
+  if (code.length > 16) return decode(code);   // older long links still work
+  let found = null;
+  DATA.forEach(cat => cat.items.forEach(t => { if (!found && cid(t) === code) found = { t, k: cat.label }; }));
+  if (!found){   // compliment since retired or reworded: send a fresh one instead
+    const cat = DATA[Math.floor(Math.random() * DATA.length)];
+    found = { t: cat.items[Math.floor(Math.random() * cat.items.length)], k: cat.label };
+  }
+  return { ...found, to: clip(q.get("to"), 30), fr: clip(q.get("fr"), 30), n: clip(q.get("n"), 120) };
+}
 
 /* ---------- Personal details on the receipt ---------- */
 function setPersonal(c){
@@ -1014,8 +1034,7 @@ setInterval(() => { if (!document.hidden) fetchCount(); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchCount(); });
 
 /* ---------- Arriving from a shared link ---------- */
-const incoming = new URLSearchParams(location.search).get("c");
-const received = incoming && decode(incoming);
+const received = readIncoming();
 if (received){
   const hey = received.to ? `Hey ${received.to}! ` : "";
   const who = received.fr || "Someone";
