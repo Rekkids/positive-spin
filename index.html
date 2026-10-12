@@ -8,7 +8,7 @@
 <meta property="og:title" content="Someone sent you a compliment">
 <meta property="og:description" content="Put a Positive Spin on someone's day.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://YOUR-PROJECT.vercel.app/og.png">
+<meta property="og:image" content="https://positive-spin.vercel.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -200,6 +200,7 @@
   .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
   .btn:focus-visible{outline:4px solid var(--coral);outline-offset:3px}
   .btn-share{background:var(--coral);color:var(--ink)}
+  .btn-wa{background:#25D366;color:var(--ink);text-decoration:none;text-align:center;flex-basis:100%}
   .btn-again{background:var(--gold)}
   .btn-save{background:var(--paper)}
   .img-opt{flex-basis:100%;text-align:center;font-size:.9rem;font-weight:500;display:flex;gap:8px;justify-content:center;align-items:center;cursor:pointer}
@@ -369,12 +370,12 @@
     </div>
   </div>
   <div class="composer-actions">
-    <button type="submit" class="btn btn-share">Send it</button>
+    <a class="btn btn-wa" id="waDirect" href="https://wa.me/" target="_blank" rel="noopener">Send on WhatsApp</a>
+    <button type="submit" class="btn btn-share">More ways to send</button>
     <button type="button" class="link-btn" id="cancelBtn">Cancel</button>
   </div>
   <div class="sheet" id="sheet">
     <button type="button" class="btn" id="copyBtn">Copy link</button>
-    <a class="btn" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
     <a class="btn" id="mailBtn">Email</a>
   </div>
 </form>
@@ -742,6 +743,8 @@ function readComposer(){
   $("noteCount").textContent = `${nIn.value.length} / 120`;
   setPersonal(current);
   refreshImageOptions();
+  // keep the WhatsApp link ready, so tapping it opens WhatsApp straight away
+  $("waDirect").href = "https://wa.me/?text=" + encodeURIComponent(shareMessage(current) + " " + shareUrl(current));
 }
 
 $("shareBtn").addEventListener("click", () => {
@@ -778,13 +781,17 @@ composer.addEventListener("submit", async (e) => {
     try{ await navigator.share({ title, text, url }); countSend(); showToast("Sent. You just made someone's day."); return; }
     catch(err){ if (err.name === "AbortError") return; }
   }
-  $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(text + " " + url);
   $("mailBtn").href = "mailto:?subject=" + encodeURIComponent(title) +
                       "&body=" + encodeURIComponent(text + "\n\n" + url);
   sheet.classList.add("show");
 });
 
-$("waBtn").addEventListener("click", () => countSend());
+$("waDirect").addEventListener("click", () => {
+  readComposer();
+  if (current.fr) store.set("ps_from", current.fr);
+  countSend();
+  showToast("Opening WhatsApp…");
+});
 $("mailBtn").addEventListener("click", () => countSend());
 $("copyBtn").addEventListener("click", async () => {
   const url = shareUrl(current);
