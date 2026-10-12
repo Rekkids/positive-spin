@@ -11,7 +11,7 @@ Put a Positive Spin on someone's day. Spin the wheel, get a compliment printed b
 |---|---|
 | `index.html` | The whole site: wheel, receipt, sharing, Save image, no-repeat logic, counter display |
 | `api/count.js` | Vercel function for the "compliments sent" counter (one number in Upstash Redis) |
-| `fonts/` | Self-hosted Rubik and Space Mono (add the three `.ttf` files, see `fonts/README.txt`) |
+| `Rubik-VariableFont_wght.ttf`, `SpaceMono-Regular.ttf`, `SpaceMono-Bold.ttf` | Self-hosted fonts (Google Fonts, SIL Open Font License), kept next to `index.html` |
 | `og.png` | Link preview image for WhatsApp, iMessage, etc. |
 | `favicon.svg` | Browser tab icon |
 
