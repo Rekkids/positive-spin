@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Positive Spin</title>
+<meta name="description" content="Put a Positive Spin on someone's day.">
+<meta property="og:title" content="Someone sent you a compliment">
+<meta property="og:description" content="Put a Positive Spin on someone's day.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://YOUR-PROJECT.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#B6E2E2">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  /* Fonts are self-hosted from /fonts (no third-party requests). Missing files fall back to system fonts. */
+  @font-face{font-family:"Rubik";src:url("fonts/Rubik-VariableFont_wght.ttf") format("truetype");font-weight:300 900;font-style:normal;font-display:swap}
+  @font-face{font-family:"Space Mono";src:url("fonts/SpaceMono-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+  @font-face{font-family:"Space Mono";src:url("fonts/SpaceMono-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+
+  :root{
+    --bg:#B6E2E2;        /* jagged ice */
+    --ink:#1D1B26;
+    --paper:#FFFDF6;
+    --paper-line:#D9D3C3;
+    --cream:#EEE5A5;     /* double colonial white */
+    --coral:#FA6D61;     /* bittersweet */
+    --orange:#FFA142;    /* yellow orange */
+    --gold:#F5C747;      /* casablanca */
+    --stamp:#D9473B;     /* deepened coral for ink on paper */
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;overflow-x:clip}
+  body{
+    min-height:100vh;
+    background-color:var(--bg);
+    /* layers, top to bottom: paper grain, fade-out, sunburst rays (centred on the wheel via --by) */
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.1 0 0 0 0 0.15 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(circle at 50% var(--by,340px), transparent 0 190px, var(--bg) 680px),
+      repeating-conic-gradient(from 0deg at 50% var(--by,340px), rgba(238,229,165,.6) 0 7.5deg, transparent 7.5deg 15deg);
+    background-size:160px 160px, auto, auto;
+    background-repeat:repeat, no-repeat, no-repeat;
+    color:var(--ink);
+    font-family:"Rubik",system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 16px 56px;
+    overflow-x:hidden;
+  }
+
+  /* Live counter */
+  .counter{
+    display:inline-flex;align-items:center;gap:8px;margin:0 0 16px;padding:7px 14px;border-radius:999px;
+    background:var(--ink);color:var(--cream);font-family:"Space Mono",monospace;font-size:.82rem;letter-spacing:.04em;
+    box-shadow:0 4px 0 rgba(29,27,38,.25);
+  }
+  .counter .num{font-weight:700;color:var(--gold);display:inline-block;font-variant-numeric:tabular-nums}
+  .counter.bump .num{animation:bump .5s ease}
+  @keyframes bump{40%{transform:scale(1.35)}}
+
+  /* Header */
+  header{text-align:center;margin-bottom:18px}
+  h1{
+    font-weight:900;font-size:clamp(2rem,8vw,3.2rem);line-height:.95;margin:0;
+    letter-spacing:-.02em;
+    text-shadow:3px 3px 0 var(--gold), 6px 6px 0 var(--coral);
+  }
+  .sub{margin:14px auto 0;font-weight:500;font-size:1.05rem;opacity:.85;max-width:30ch;text-wrap:balance}
+
+  /* Wheel */
+  .wheel-wrap{position:relative;width:min(380px,88vw);aspect-ratio:1;margin:8px 0 22px}
+  .wheel-wrap::before{
+    content:"";position:absolute;inset:-10px;border-radius:50%;
+    background:var(--ink);box-shadow:0 10px 0 rgba(29,27,38,.18);
+  }
+  .wheel-clip{position:absolute;inset:0;border-radius:50%;overflow:hidden}
+  #wheel{
+    position:absolute;inset:0;width:100%;height:100%;
+    transition:transform 5s cubic-bezier(.12,.72,.12,1);
+    will-change:transform;
+  }
+  #wheel text{font-family:"Rubik",sans-serif;font-weight:900;font-size:19px;letter-spacing:.02em}
+  .pointer{
+    position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+    width:44px;height:52px;z-index:3;filter:drop-shadow(0 4px 0 rgba(0,0,0,.2));
+  }
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:30%;aspect-ratio:1;border-radius:50%;border:6px solid var(--ink);
+    background:var(--paper);color:var(--ink);
+    font-family:"Rubik",sans-serif;font-weight:900;font-size:clamp(1rem,4.6vw,1.4rem);letter-spacing:.06em;
+    cursor:pointer;z-index:2;box-shadow:0 5px 0 var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .hub:hover{transform:translate(-50%,-52%)}
+  .hub:active{transform:translate(-50%,-46%);box-shadow:0 1px 0 var(--ink)}
+  .hub:disabled{cursor:wait;opacity:.9}
+  /* idle "tap me" motion: gentle breathe + gold ripple */
+  .hub{animation:hubBreathe 2.4s ease-in-out infinite}
+  .hub::after{
+    content:"";position:absolute;inset:-6px;border-radius:50%;
+    border:5px solid var(--paper);pointer-events:none;
+    animation:hubRipple 2.4s ease-out infinite;
+  }
+  @keyframes hubBreathe{
+    0%,100%{transform:translate(-50%,-50%) scale(1)}
+    50%{transform:translate(-50%,-50%) scale(1.07)}
+  }
+  @keyframes hubRipple{
+    0%{transform:scale(1);opacity:.95}
+    80%,100%{transform:scale(1.5);opacity:0}
+  }
+  .hub:hover,.hub:active,.hub:disabled{animation:none}
+  .hub:disabled::after{animation:none;opacity:0}
+  .hub:focus-visible{outline:4px solid var(--coral);outline-offset:4px}
+
+  /* Received chip */
+  .chip{
+    display:none;margin:0 0 12px;padding:8px 14px;border-radius:999px;
+    background:var(--ink);color:var(--cream);font-weight:700;font-size:.95rem;
+    box-shadow:0 4px 0 var(--ink);
+  }
+  .chip.show{display:inline-block}
+
+  /* Printer */
+  .printer-area{width:min(400px,92vw);display:flex;flex-direction:column;align-items:center}
+  .printer{
+    position:relative;width:100%;height:56px;border-radius:16px;
+    background:var(--ink);box-shadow:0 6px 0 rgba(29,27,38,.25);z-index:2;
+    display:flex;align-items:center;justify-content:space-between;padding:0 18px;
+  }
+  .printer-label{font-family:"Space Mono",monospace;font-size:.72rem;color:#f4efe2;letter-spacing:.14em;opacity:.8}
+  .led{width:10px;height:10px;border-radius:50%;background:#3a3846}
+  .printer.busy .printer-label{letter-spacing:.06em;opacity:1;color:var(--gold)}
+  .printer.busy .led{background:var(--gold);animation:blink .3s steps(2) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .printer::after{
+    content:"";position:absolute;left:7%;right:7%;bottom:8px;height:6px;border-radius:3px;background:#000;
+  }
+
+  .slot{
+    width:86%;display:grid;grid-template-rows:0fr;margin-top:-8px;
+    transition:grid-template-rows 2s steps(22);
+  }
+  .slot.open{grid-template-rows:1fr}
+  .slot.instant{transition:none}
+  .slot-inner{min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    filter:drop-shadow(0 8px 10px rgba(29,27,38,.18))}
+
+  .receipt{
+    background:var(--paper);
+    font-family:"Space Mono",monospace;font-size:.8rem;line-height:1.45;color:#2b2930;
+    padding:26px 20px 14px;
+  }
+  .receipt .center{text-align:center}
+  .receipt .brand{font-weight:700;font-size:.95rem;letter-spacing:.08em}
+  .receipt .muted{opacity:.6}
+  .rule{border:0;border-top:2px dashed var(--paper-line);margin:12px 0}
+  .row{display:flex;justify-content:space-between;gap:12px}
+  .item-cat{font-weight:700;text-transform:uppercase}
+  .compliment{
+    font-family:"Rubik",sans-serif;font-weight:900;font-size:clamp(1.6rem,6.8vw,2rem);line-height:1.18;
+    color:var(--ink);margin:20px 0 14px;text-align:center;text-wrap:balance;letter-spacing:-.01em;
+  }
+  .compliment span{
+    background:linear-gradient(transparent 52%, var(--cream) 52%, var(--cream) 92%, transparent 92%);
+    -webkit-box-decoration-break:clone;box-decoration-break:clone;padding:0 2px;
+  }
+  .stamp{
+    display:inline-block;margin-top:6px;padding:2px 8px;border:2px solid currentColor;border-radius:6px;
+    font-weight:700;font-size:.72rem;letter-spacing:.1em;transform:rotate(-4deg);
+  }
+  .site-url{margin-top:8px;font-size:.72rem;letter-spacing:.06em}
+  .site-url b{font-size:.85rem;letter-spacing:.04em;overflow-wrap:anywhere}
+  .barcode{
+    height:44px;margin:14px auto 6px;width:80%;
+    background:repeating-linear-gradient(90deg,#2b2930 0 2px,transparent 2px 4px,#2b2930 4px 7px,transparent 7px 9px,#2b2930 9px 10px,transparent 10px 13px);
+  }
+  .tear{
+    height:12px;
+    background:
+      linear-gradient(135deg,var(--paper) 50%,transparent 50%) 0 0/16px 12px repeat-x,
+      linear-gradient(-135deg,var(--paper) 50%,transparent 50%) 0 0/16px 12px repeat-x;
+  }
+
+  /* Actions */
+  .actions{
+    display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:22px;
+    opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .3s ease, transform .3s ease;
+  }
+  .actions.show{opacity:1;transform:none;pointer-events:auto}
+  .btn{
+    font-family:"Rubik",sans-serif;font-weight:900;font-size:1.05rem;letter-spacing:.02em;
+    border:3px solid var(--ink);border-radius:14px;padding:13px 22px;cursor:pointer;
+    box-shadow:0 5px 0 var(--ink);transition:transform .1s ease, box-shadow .1s ease;color:var(--ink);
+  }
+  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+  .btn:focus-visible{outline:4px solid var(--coral);outline-offset:3px}
+  .btn-share{background:var(--coral);color:var(--ink)}
+  .btn-again{background:var(--gold)}
+  .btn-save{background:var(--paper)}
+  .img-opt{flex-basis:100%;text-align:center;font-size:.9rem;font-weight:500;display:flex;gap:8px;justify-content:center;align-items:center;cursor:pointer}
+  .img-opt input{width:18px;height:18px;accent-color:var(--coral)}
+  .preview{position:fixed;inset:0;z-index:20;background:rgba(29,27,38,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+  .preview-card{background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:14px;max-width:420px;width:100%;text-align:center;box-shadow:0 6px 0 var(--ink)}
+  .preview-card img{display:block;width:100%;max-height:68vh;object-fit:contain;border-radius:10px;-webkit-touch-callout:default}
+  .preview-card p{margin:12px 0;font-size:.95rem}
+  .preview-actions{display:flex;gap:10px;justify-content:center}
+  .preview-actions .btn{text-decoration:none;font-size:.95rem;padding:10px 18px}
+
+  /* Share sheet (desktop fallback) */
+  .sheet{
+    display:none;margin-top:14px;gap:10px;flex-wrap:wrap;justify-content:center;
+  }
+  .sheet.show{display:flex}
+  .sheet .btn{font-size:.9rem;padding:9px 16px;background:var(--paper)}
+  .sheet a.btn{text-decoration:none}
+
+  /* Personalise panel */
+  .composer{
+    display:none;width:min(400px,92vw);margin-top:20px;background:var(--paper);
+    border:3px solid var(--ink);border-radius:18px;padding:18px 18px 20px;box-shadow:0 6px 0 var(--ink);
+  }
+  .composer.show{display:block}
+  .composer h2{margin:0 0 4px;font-weight:900;font-size:1.25rem}
+  .composer .hint{margin:0 0 14px;font-size:.9rem;opacity:.75}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-family:"Space Mono",monospace;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .field input,.field textarea{
+    font-family:"Rubik",sans-serif;font-size:16px;color:var(--ink);background:#fff;
+    border:2px solid var(--ink);border-radius:10px;padding:10px 12px;width:100%;
+  }
+  .field textarea{resize:none;height:76px;line-height:1.35}
+  .field input:focus,.field textarea:focus{outline:3px solid var(--coral);outline-offset:1px}
+  .count{font-family:"Space Mono",monospace;font-size:.7rem;opacity:.6;text-align:right}
+  .composer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}
+  .link-btn{background:none;border:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer;padding:6px 2px}
+  @media (max-width:380px){ .fields{grid-template-columns:1fr} }
+
+  .receipt .who{text-transform:uppercase;overflow-wrap:anywhere;text-align:right}
+  .receipt .note{font-size:.9rem;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:4px;color:var(--ink)}
+
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);
+    background:var(--ink);color:#fff;font-weight:700;padding:12px 18px;border-radius:12px;
+    transition:transform .3s ease, visibility .3s;z-index:10;max-width:calc(100vw - 32px);text-align:center;
+    visibility:hidden;
+  }
+  .toast.show{transform:translate(-50%,0);visibility:visible}
+
+  footer{margin-top:40px;width:min(400px,92vw);text-align:center;font-family:"Space Mono",monospace;font-size:.78rem}
+  .promise{font-weight:700;letter-spacing:.02em;margin:0 0 12px;text-wrap:balance}
+  .how{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);text-align:left}
+  .how summary{cursor:pointer;font-family:"Rubik",sans-serif;font-weight:700;font-size:.95rem;padding:12px 16px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  .how summary::-webkit-details-marker{display:none}
+  .how summary::after{content:"+";font-size:1.3rem;line-height:1}
+  .how[open] summary::after{content:"\2212"}
+  .how summary:focus-visible{outline:4px solid var(--coral);outline-offset:3px;border-radius:10px}
+  .how .body{padding:0 16px 14px;font-family:"Rubik",sans-serif;font-size:.92rem;line-height:1.5}
+  .how .body p{margin:0 0 10px}
+  .signoff{margin-top:14px;opacity:.6}
+
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (prefers-reduced-motion: reduce){
+    .hub,.hub::after,.counter.bump .num{animation:none}
+    #wheel{transition-duration:1.2s}
+    .slot{transition-duration:.6s}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="counter" id="counter" hidden aria-live="polite"><span class="num" id="counterNum">0</span> <span id="counterWord">compliments</span> sent</p>
+  <h1>Positive<br>Spin</h1>
+  <p class="sub" id="sub">Put a Positive Spin on someone's day.</p>
+</header>
+
+<div class="wheel-wrap">
+  <svg class="pointer" viewBox="0 0 44 52" aria-hidden="true">
+    <path d="M22 50 L3 10 Q2 2 10 2 L34 2 Q42 2 41 10 Z" fill="#FFFDF6" stroke="#1D1B26" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="22" cy="14" r="5" fill="#FA6D61"/>
+  </svg>
+  <div class="wheel-clip"><svg id="wheel" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+  <button class="hub" id="spinBtn" aria-label="Spin the wheel">SPIN</button>
+</div>
+
+<span class="chip" id="chip">💌 Someone wanted you to have this</span>
+
+<div class="printer-area">
+  <div class="printer" id="printer">
+    <span class="printer-label" id="printerLabel">COMPLIMENT-O-MATIC</span>
+    <span class="led"></span>
+  </div>
+  <div class="slot" id="slot">
+    <div class="slot-inner">
+      <div class="receipt" id="receipt">
+        <div class="center brand">★ POSITIVE SPIN ★</div>
+        <div class="center muted">FROM THE COMPLIMENT-O-MATIC</div>
+        <div class="center muted">FREE OF CHARGE SINCE FOREVER</div>
+        <hr class="rule">
+        <div class="row"><span>DATE <span id="rDate"></span></span><span>TIME <span id="rTime"></span></span></div>
+        <div class="row"><span>ORDER</span><span id="rOrder"></span></div>
+        <div class="row" id="rToRow" hidden><span>FOR</span><b class="who" id="rTo"></b></div>
+        <div class="row" id="rFromRow" hidden><span>FROM</span><b class="who" id="rFrom"></b></div>
+        <hr class="rule">
+        <div class="row"><span>1 x <span class="item-cat" id="rCat"></span></span><span>0.00</span></div>
+        <div class="compliment" id="rText"></div>
+        <div id="rNoteWrap" hidden>
+          <hr class="rule">
+          <div class="muted" id="rNoteLabel">A NOTE FOR YOU:</div>
+          <div class="note" id="rNote"></div>
+        </div>
+        <hr class="rule">
+        <div class="row"><span>SUBTOTAL</span><span>PRICELESS</span></div>
+        <div class="row"><span>TAX</span><span>NONE</span></div>
+        <div class="row"><b>TOTAL</b><b>MORE THAN ENOUGH</b></div>
+        <hr class="rule">
+        <div class="barcode"></div>
+        <div class="center">THANK YOU, COME AGAIN</div>
+        <div class="center site-url">REFILLS ARE FREE<br><b id="rSite">POSITIVE SPIN</b></div>
+        <div class="center"><span class="stamp" id="rStamp">100% TRUE</span></div>
+      </div>
+      <div class="tear"></div>
+    </div>
+  </div>
+</div>
+
+<div class="actions" id="actions">
+  <button class="btn btn-share" id="shareBtn">Send to a friend</button>
+  <button class="btn btn-save" id="saveBtn">Save image</button>
+  <button class="btn btn-again" id="againBtn">Spin again</button>
+  <label class="img-opt" id="imgOpts" hidden><input type="checkbox" id="imgNote"> Include the note in the image</label>
+</div>
+
+<div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-label="Your receipt image">
+  <div class="preview-card">
+    <img id="previewImg" alt="Your Positive Spin receipt">
+    <p>Press and hold the image to save it to your photos.</p>
+    <div class="preview-actions">
+      <a class="btn btn-again" id="previewDl" download="positive-spin.png">Download</a>
+      <button type="button" class="btn" id="previewClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<form class="composer" id="composer" autocomplete="off">
+  <h2>Make it personal</h2>
+  <p class="hint">All optional. Watch the receipt update as you type.</p>
+  <div class="fields">
+    <div class="field">
+      <label for="toName">Their name</label>
+      <input id="toName" maxlength="30" placeholder="Sam">
+    </div>
+    <div class="field">
+      <label for="fromName">Your name</label>
+      <input id="fromName" maxlength="30" placeholder="Leave blank to stay a mystery">
+    </div>
+    <div class="field full">
+      <label for="noteText">Add a note</label>
+      <textarea id="noteText" maxlength="120" placeholder="Saw this and thought of you."></textarea>
+      <span class="count" id="noteCount">0 / 120</span>
+    </div>
+  </div>
+  <div class="composer-actions">
+    <button type="submit" class="btn btn-share">Send it</button>
+    <button type="button" class="link-btn" id="cancelBtn">Cancel</button>
+  </div>
+  <div class="sheet" id="sheet">
+    <button type="button" class="btn" id="copyBtn">Copy link</button>
+    <a class="btn" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
+    <a class="btn" id="mailBtn">Email</a>
+  </div>
+</form>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="sr-only" aria-live="polite" id="live"></div>
+
+<footer>
+  <p class="promise">No accounts. No ads. No tracking. Nobody makes a cent. Just compliments.</p>
+  <details class="how">
+    <summary>How it works</summary>
+    <div class="body">
+      <p><b>We don't keep anything.</b> The names and note you add travel inside the link you send, straight to your friend. They're never saved on a server, and we never see them.</p>
+      <p><b>We count one thing.</b> How many compliments have been sent: a single number, with nothing attached to it.</p>
+      <p><b>Your device remembers what you've seen</b> so you don't get repeats. That list stays on your device and is never sent anywhere.</p>
+      <p><b>Nobody makes money from this.</b> No ads, no sign-ups, no selling anything. It exists because a small kind word, sent at the right moment, can change someone's day.</p>
+    </div>
+  </details>
+  <p class="signoff">Printed with kindness by the Compliment-o-matic</p>
+</footer>
+
+<script>
+/* ============================================================
+   COMPLIMENTS
+   Placeholders: replace the items in each category with your own.
+   Keep 8 categories for the wheel, or change the count freely
+   (the wheel redraws itself to match).
+   ============================================================ */
+const DATA = [
+  { label:"SMILE",    color:"#FA6D61", ink:"#1D1B26", items:[
+    "Your smile is contagious.",
+    "You could get the grumpiest baby to grin.",
+    "You have the best laugh.",
+    "You light up the room.",
+    "You're sunshine on a rainy day.",
+    "Somehow, you just shine.",
+    "Colours look brighter when you're around.",
+    "You're a breath of fresh air.",
+    "You're someone's reason to smile today.",
+    "If life were an animated film, the woodland creatures would follow you around."
+  ]},
+  { label:"FUN",      color:"#FFA142", ink:"#1D1B26", items:[
+    "You have a great sense of humour.",
+    "You always know how to have fun.",
+    "Jokes land better when you tell them.",
+    "Time with you feels like a tiny holiday.",
+    "You're more fun than a surprise day off.",
+    "You can make anyone laugh, even on their worst day.",
+    "Hanging out with you is always a good time.",
+    "Even your mistakes look like they were part of the plan.",
+    "You've got all the right moves."
+  ]},
+  { label:"KINDNESS", color:"#F5C747", ink:"#1D1B26", items:[
+    "Your kindness makes things lighter for everyone you meet.",
+    "You're a great listener.",
+    "You're so thoughtful.",
+    "You always seem to know what people need.",
+    "You always find the right words to make someone feel better.",
+    "You bring out the best in people.",
+    "You should be thanked more often.",
+    "You're more helpful than you realise.",
+    "The way you look after the people you love is something special."
+  ]},
+  { label:"COURAGE",  color:"#FA6D61", ink:"#1D1B26", items:[
+    "You're strong.",
+    "You're brave.",
+    "You stand by what you believe in.",
+    "Once you make up your mind, nothing gets in your way.",
+    "You get knocked down and you get back up. Every time.",
+    "You'd be first pick for any zombie survival team.",
+    "When you get something wrong, you put it right.",
+    "You really know who you are."
+  ]},
+  { label:"BRAIN",    color:"#FFA142", ink:"#1D1B26", items:[
+    "You're one smart cookie.",
+    "How do you know so much about everything?",
+    "You have the best ideas.",
+    "You're great at figuring things out.",
+    "Your perspective is refreshing.",
+    "You have a good head on your shoulders.",
+    "You're always learning and growing. That's impressive.",
+    "You seem like someone who finishes the crossword in one sitting.",
+    "Your texts probably have perfect punctuation."
+  ]},
+  { label:"SPIRIT",   color:"#F5C747", ink:"#1D1B26", items:[
+    "Your style is all your own.",
+    "You're inspiring.",
+    "If 'charming' needed a mascot, it would be you.",
+    "You're cooler than you give yourself credit for.",
+    "You're interesting in so many different ways.",
+    "Your creativity seems to have no ceiling.",
+    "You're beautiful inside and out.",
+    "There's a reason people are drawn to you.",
+    "You always find the silver lining.",
+    "You're wonderful."
+  ]},
+  { label:"IMPACT",   color:"#FA6D61", ink:"#1D1B26", items:[
+    "You should be proud of yourself.",
+    "You're making a difference.",
+    "You deserve every bit of credit you get.",
+    "You set a great example.",
+    "Your actions say more than words ever could.",
+    "The world is better with you in it.",
+    "You're a gift to the people around you.",
+    "Any team would be lucky to have you.",
+    "You're appreciated.",
+    "You're an incredible human.",
+    "Everything would be better if more people were like you.",
+    "Whoever helped make you who you are did a brilliant job."
+  ]},
+  { label:"UNIQUE",   color:"#FFA142", ink:"#1D1B26", items:[
+    "You're perfect just the way you are.",
+    "You are enough.",
+    "You're one of a kind.",
+    "On a scale from 1 to 10, you're an 11.",
+    "There's ordinary, and then there's you.",
+    "Unicorns wish they were as rare as you.",
+    "You're really something special.",
+    "You're the rare thing that actually lives up to the hype.",
+    "If there were an award for 'Best, overall', you'd win it every year."
+  ]},
+  { label:"FRIEND",   color:"#F5C747", ink:"#1D1B26", items:[
+    "You're an awesome friend.",
+    "Being around you makes everything better.",
+    "Your friends are lucky to have you.",
+    "People know you've got their back.",
+    "You always know just what to say.",
+    "Time with you is never wasted.",
+    "You're the friend everyone hopes to have.",
+    "The only problem with knowing you is not knowing you sooner."
+  ]},
+  { label:"CHEEKY",   color:"#A23B72", ink:"#EEE5A5", items:[
+    "You're one of the few people nobody has to worry about. Thank you for that.",
+    "You're as awesome as you secretly think you are.",
+    "You ruin a perfectly good bad mood. Every single time.",
+    "You make terrible ideas sound like brilliant plans.",
+    "You're exactly the right amount of weird.",
+    "If you were cloned, the original would still win.",
+    "You'd beat pizza in a popularity contest. That's saying something.",
+    "You have excellent taste in friends. Clearly.",
+    "Leave some charisma for the rest of us, please.",
+    "Your confidence should come with a warning label.",
+    "You're the human version of finding money in an old jacket.",
+    "You're the plot twist everyone needed.",
+    "Your vibe has its own postcode.",
+    "You could win an argument with a GPS."
+  ]}
+];
+
+const STAMPS = ["100% TRUE","VERIFIED","CERTIFIED","NO RETURNS NEEDED","FACT"];
+
+/* ---------- Build the wheel ---------- */
+const NS = "http://www.w3.org/2000/svg";
+const wheel = document.getElementById("wheel");
+const SEG = 360 / DATA.length;
+const C = 200, R = 196;
+
+function pt(deg, r){ const a = (deg - 90) * Math.PI / 180; return [C + r*Math.cos(a), C + r*Math.sin(a)]; }
+
+DATA.forEach((d, i) => {
+  const [x0,y0] = pt(i*SEG, R), [x1,y1] = pt((i+1)*SEG, R);
+  const path = document.createElementNS(NS, "path");
+  path.setAttribute("d", `M${C} ${C} L${x0} ${y0} A${R} ${R} 0 ${SEG>180?1:0} 1 ${x1} ${y1} Z`);
+  path.setAttribute("fill", d.color);
+  path.setAttribute("stroke", "#EEE5A5");
+  path.setAttribute("stroke-width", "4");
+  wheel.appendChild(path);
+
+  const mid = i*SEG + SEG/2;
+  const t = document.createElementNS(NS, "text");
+  t.textContent = d.label;
+  t.setAttribute("x", C + R*0.6);
+  t.setAttribute("y", C);
+  t.setAttribute("fill", d.ink);
+  t.setAttribute("text-anchor", "middle");
+  t.setAttribute("dominant-baseline", "central");
+  // flip labels on the left half so they never read upside down
+  const flip = mid > 180 ? ` rotate(180 ${C + R*0.6} ${C})` : "";
+  t.setAttribute("transform", `rotate(${mid - 90} ${C} ${C})${flip}`);
+  wheel.appendChild(t);
+});
+// rim bulbs
+for (let k = 0; k < DATA.length * 2; k++){
+  const [x,y] = pt(k * SEG/2, R - 9);
+  const b = document.createElementNS(NS, "circle");
+  b.setAttribute("cx", x); b.setAttribute("cy", y); b.setAttribute("r", 4.5);
+  b.setAttribute("fill", k % 2 ? "#EEE5A5" : "#1D1B26");
+  wheel.appendChild(b);
+}
+
+/* ---------- Elements ---------- */
+const $ = id => document.getElementById(id);
+const spinBtn = $("spinBtn"), slot = $("slot"), printer = $("printer"),
+      actions = $("actions"), sheet = $("sheet"), chip = $("chip"), toast = $("toast");
+
+let rotation = 0, spinning = false, current = null;
+
+/* ---------- Local storage helper (this device only, never sent anywhere) ---------- */
+const store = {
+  get(k){ try{ return localStorage.getItem(k) || ""; }catch(e){ return ""; } },
+  set(k,v){ try{ localStorage.setItem(k, v); }catch(e){} }
+};
+const readList = k => { try{ const v = JSON.parse(store.get(k) || "[]"); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+
+/* ---------- No repeats ----------
+   Works like a shuffled deck per device: you only get compliments you haven't seen,
+   the wheel avoids the last 3 categories, and once everything has been seen the deck
+   reshuffles (still avoiding your 10 most recent). Each compliment's ID is a short hash
+   of its text, so adding, removing or reordering compliments never scrambles anyone's list. */
+function cid(t){ let h = 5381; for (const ch of t) h = ((h << 5) + h + ch.codePointAt(0)) | 0; return (h >>> 0).toString(36); }
+const memory = {
+  seen: new Set(readList("ps_seen")),
+  last: readList("ps_last"),       // most recent compliment IDs
+  recent: readList("ps_recent"),   // most recent category labels
+  save(){
+    store.set("ps_seen", JSON.stringify([...this.seen]));
+    store.set("ps_last", JSON.stringify(this.last));
+    store.set("ps_recent", JSON.stringify(this.recent));
+  },
+  record(label, text){
+    const id = cid(text);
+    this.seen.add(id);
+    this.last = this.last.filter(x => x !== id).concat(id).slice(-10);
+    if (label) this.recent = this.recent.concat(label).slice(-3);
+    this.save();
+  }
+};
+
+function pickCompliment(){
+  const unseen = (cat) => cat.items.filter(t => !memory.seen.has(cid(t)));
+  const build = (avoidRecent) => {
+    const out = [];
+    DATA.forEach((cat, i) => {
+      if (avoidRecent && memory.recent.includes(cat.label)) return;
+      unseen(cat).forEach(t => out.push({ i, t }));
+    });
+    return out;
+  };
+  let pool = build(true);
+  if (!pool.length) pool = build(false);
+  if (!pool.length){
+    memory.seen = new Set(memory.last);   // fresh deck, minus the most recent few
+    pool = build(true);
+    if (!pool.length) pool = build(false);
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ---------- Link encoding ---------- */
+const clip = (v, n) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, n) : "");
+function encode(c){
+  const o = { t: c.t, k: c.k };
+  if (c.to) o.to = c.to;
+  if (c.fr) o.fr = c.fr;
+  if (c.n)  o.n  = c.n;
+  const s = btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  return s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function decode(str){
+  try{
+    let s = str.replace(/-/g,"+").replace(/_/g,"/");
+    while (s.length % 4) s += "=";
+    const o = JSON.parse(decodeURIComponent(escape(atob(s))));
+    if (typeof o.t !== "string" || !o.t.trim()) return null;
+    return {
+      t: o.t.slice(0,280),
+      k: clip(o.k, 24) || "COMPLIMENT",
+      to: clip(o.to, 30), fr: clip(o.fr, 30), n: clip(o.n, 120)
+    };
+  }catch(e){ return null; }
+}
+function shareUrl(c){ return location.origin + location.pathname + "?c=" + encode(c); }
+
+/* ---------- Personal details on the receipt ---------- */
+function setPersonal(c){
+  $("rToRow").hidden = !c.to;   $("rTo").textContent = c.to || "";
+  $("rFromRow").hidden = !c.fr; $("rFrom").textContent = c.fr || "";
+  $("rNoteWrap").hidden = !c.n; $("rNote").textContent = c.n || "";
+  $("rNoteLabel").textContent = c.fr ? `A NOTE FROM ${c.fr.toUpperCase()}:` : "A NOTE FOR YOU:";
+}
+
+/* ---------- Receipt ---------- */
+function hideReceipt(){
+  slot.classList.add("instant");
+  slot.classList.remove("open");
+  void slot.offsetHeight;
+  slot.classList.remove("instant");
+  actions.classList.remove("show");
+  composer.classList.remove("show");
+  sheet.classList.remove("show");
+}
+
+function printReceipt(c){
+  current = c;
+  const now = new Date();
+  $("rDate").textContent = now.toLocaleDateString("en-GB");
+  $("rTime").textContent = now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+  $("rOrder").textContent = "#" + String(Math.floor(Math.random()*1e6)).padStart(6,"0");
+  $("rCat").textContent = c.k;
+  $("rText").replaceChildren(Object.assign(document.createElement("span"), { textContent: c.t }));
+  setPersonal(c);
+  const st = $("rStamp");
+  st.textContent = STAMPS[Math.floor(Math.random()*STAMPS.length)];
+  st.style.color = "var(--stamp)";
+
+  printer.classList.add("busy");
+  $("printerLabel").textContent = "LEKKER WORDS ARE ON THEIR WAY…";
+  slot.classList.add("open");
+  $("live").textContent = "Your compliment: " + c.t;
+  const done = () => {
+    printer.classList.remove("busy");
+    $("printerLabel").textContent = "COMPLIMENT-O-MATIC";
+    actions.classList.add("show");
+    refreshImageOptions();
+    spinning = false; spinBtn.disabled = false;
+    if (navigator.vibrate) navigator.vibrate(25);
+  };
+  const dur = matchMedia("(prefers-reduced-motion: reduce)").matches ? 650 : 2050;
+  setTimeout(done, dur);
+}
+
+/* ---------- Spin ---------- */
+function spin(){
+  if (spinning) return;
+  spinning = true; spinBtn.disabled = true;
+  hideReceipt();
+  chip.classList.remove("show");
+
+  const pick = pickCompliment();
+  const i = pick.i;
+  const center = i*SEG + SEG/2;
+  const cur = ((rotation % 360) + 360) % 360;
+  const delta = (((360 - center - cur) % 360) + 360) % 360;
+  const jitter = (Math.random()*2 - 1) * (SEG/2 - 6);
+  rotation += 360*6 + delta + jitter;
+  wheel.style.transform = `rotate(${rotation}deg)`;
+
+  const cat = DATA[i];
+  const text = pick.t;
+  memory.record(cat.label, text);
+
+  const onEnd = (e) => {
+    if (e.target !== wheel) return;
+    wheel.removeEventListener("transitionend", onEnd);
+    printReceipt({ t: text, k: cat.label });
+  };
+  wheel.addEventListener("transitionend", onEnd);
+}
+
+spinBtn.addEventListener("click", spin);
+$("againBtn").addEventListener("click", () => { window.scrollTo({top:0,behavior:"smooth"}); spin(); });
+
+/* ---------- Personalise and share ---------- */
+const composer = $("composer"), toIn = $("toName"), frIn = $("fromName"), nIn = $("noteText");
+
+function showToast(msg){
+  toast.textContent = msg; toast.classList.add("show");
+  clearTimeout(showToast.t); showToast.t = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function readComposer(){
+  current.to = clip(toIn.value, 30);
+  current.fr = clip(frIn.value, 30);
+  current.n  = clip(nIn.value, 120);
+  $("noteCount").textContent = `${nIn.value.length} / 120`;
+  setPersonal(current);
+  refreshImageOptions();
+}
+
+$("shareBtn").addEventListener("click", () => {
+  if (!current) return;
+  // fresh slip each time; remember the sender's own name
+  toIn.value = ""; nIn.value = ""; frIn.value = store.get("ps_from");
+  readComposer();
+  sheet.classList.remove("show");
+  composer.classList.add("show");
+  composer.scrollIntoView({ behavior:"smooth", block:"center" });
+  setTimeout(() => toIn.focus({ preventScroll:true }), 350);
+});
+[toIn, frIn, nIn].forEach(el => el.addEventListener("input", readComposer));
+
+$("cancelBtn").addEventListener("click", () => {
+  toIn.value = ""; nIn.value = ""; readComposer();
+  composer.classList.remove("show");
+});
+
+function shareMessage(c){
+  const hi = c.to ? `${c.to}, ` : "";
+  const who = c.fr || (c.to ? "someone" : "Someone");
+  return `${hi}${who} sent you a compliment, printed fresh. Open it here:`;
+}
+
+composer.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  readComposer();
+  if (current.fr) store.set("ps_from", current.fr);
+  const url = shareUrl(current);
+  const text = shareMessage(current);
+  const title = current.fr ? `A compliment from ${current.fr}` : "A compliment for you";
+  if (navigator.share){
+    try{ await navigator.share({ title, text, url }); countSend(); showToast("Sent. You just made someone's day."); return; }
+    catch(err){ if (err.name === "AbortError") return; }
+  }
+  $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(text + " " + url);
+  $("mailBtn").href = "mailto:?subject=" + encodeURIComponent(title) +
+                      "&body=" + encodeURIComponent(text + "\n\n" + url);
+  sheet.classList.add("show");
+});
+
+$("waBtn").addEventListener("click", () => countSend());
+$("mailBtn").addEventListener("click", () => countSend());
+$("copyBtn").addEventListener("click", async () => {
+  const url = shareUrl(current);
+  countSend();
+  try{ await navigator.clipboard.writeText(url); showToast("Link copied. Paste it anywhere."); }
+  catch(e){ prompt("Copy this link:", url); }
+});
+
+/* ---------- Save receipt as an image (Story size, 1080 x 1920) ---------- */
+const IMG = { W:1080, H:1920, blob:null, url:"", key:"" };
+const F = {
+  rubik: (w, px) => `${w} ${px}px "Rubik", system-ui, sans-serif`,
+  mono:  (w, px) => `${w} ${px}px "Space Mono", ui-monospace, monospace`
+};
+function wrapLines(ctx, text, maxW){
+  const words = text.split(/\s+/), lines = [];
+  let line = "";
+  for (const w of words){
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxW && line){ lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function imageData(includeNote){
+  return {
+    date: $("rDate").textContent, time: $("rTime").textContent, order: $("rOrder").textContent,
+    cat: current.k, text: current.t, to: current.to || "", fr: current.fr || "",
+    note: includeNote ? (current.n || "") : "",
+    stamp: $("rStamp").textContent, site: $("rSite").textContent
+  };
+}
+function drawReceipt(d){
+  const RW = 780, PAD = 56, IW = RW - PAD*2;
+  const c = document.createElement("canvas"); c.width = RW; c.height = 3000;
+  const x = c.getContext("2d");
+  x.fillStyle = "#FFFDF6"; x.fillRect(0, 0, RW, c.height);
+  x.fillStyle = "#2B2930"; x.textBaseline = "alphabetic";
+  let y = 78;
+  const center = (t, font, gap, color) => { x.font = font; x.fillStyle = color || "#2B2930"; x.textAlign = "center"; x.fillText(t, RW/2, y); y += gap; };
+  const row = (l, r, bold) => {
+    x.font = F.mono(bold ? 700 : 400, 26); x.fillStyle = "#2B2930";
+    x.textAlign = "left"; x.fillText(l, PAD, y); x.textAlign = "right"; x.fillText(r, RW - PAD, y); y += 40;
+  };
+  const rule = () => {
+    y += 4; x.strokeStyle = "#D9D3C3"; x.lineWidth = 3; x.setLineDash([12, 9]);
+    x.beginPath(); x.moveTo(PAD, y); x.lineTo(RW - PAD, y); x.stroke(); x.setLineDash([]); y += 46;
+  };
+  center("★ POSITIVE SPIN ★", F.mono(700, 32), 40);
+  center("FROM THE COMPLIMENT-O-MATIC", F.mono(400, 22), 32, "#8A8790");
+  center("FREE OF CHARGE SINCE FOREVER", F.mono(400, 22), 14, "#8A8790");
+  rule();
+  row("DATE " + d.date, "TIME " + d.time);
+  row("ORDER", d.order);
+  if (d.to) row("FOR", d.to.toUpperCase(), true);
+  if (d.fr) row("FROM", d.fr.toUpperCase(), true);
+  y -= 26; rule();
+  row("1 x " + d.cat, "0.00", false);
+  // the compliment: big, centred, highlighted
+  let size = 66, lines;
+  do { x.font = F.rubik(900, size); lines = wrapLines(x, d.text, IW - 10); size -= 4; } while (lines.length > 5 && size > 40);
+  size += 4; const lh = Math.round(size * 1.2);
+  y += Math.round(size * 0.95) + 4;
+  x.textAlign = "center";
+  for (const ln of lines){
+    const w = x.measureText(ln).width;
+    x.fillStyle = "#EEE5A5"; x.fillRect(RW/2 - w/2 - 6, y - size*0.42, w + 12, size*0.46);
+    x.fillStyle = "#1D1B26"; x.fillText(ln, RW/2, y);
+    y += lh;
+  }
+  y += 6 - lh + 40;
+  if (d.note){
+    rule(); y -= 10;
+    x.font = F.mono(400, 22); x.fillStyle = "#8A8790"; x.textAlign = "left";
+    x.fillText(d.fr ? `A NOTE FROM ${d.fr.toUpperCase()}:` : "A NOTE FOR YOU:", PAD, y); y += 40;
+    x.font = F.mono(400, 28); x.fillStyle = "#1D1B26";
+    for (const ln of wrapLines(x, d.note, IW)){ x.fillText(ln, PAD, y); y += 40; }
+    y += 6;
+  }
+  rule();
+  row("SUBTOTAL", "PRICELESS"); row("TAX", "NONE"); row("TOTAL", "MORE THAN ENOUGH", true);
+  y -= 26; rule(); y -= 20;
+  // barcode
+  const bw = IW * 0.8, bx = RW/2 - bw/2, pattern = [2,2,3,2,1,3,2,1,1,2,3,1,2,2,1,3];
+  x.fillStyle = "#2B2930";
+  for (let px = 0, k = 0; px < bw; k++){ const w = pattern[k % pattern.length] * 2.2; if (k % 2 === 0) x.fillRect(bx + px, y, Math.min(w, bw - px), 76); px += w; }
+  y += 76 + 48;
+  center("THANK YOU, COME AGAIN", F.mono(400, 26), 44);
+  center("REFILLS ARE FREE", F.mono(400, 22), 38);
+  center(d.site, F.mono(700, 30), 44);
+  // stamp
+  x.save(); x.translate(RW/2, y + 8); x.rotate(-4 * Math.PI/180);
+  x.font = F.mono(700, 24); const sw = x.measureText(d.stamp).width + 36;
+  x.strokeStyle = "#D9473B"; x.lineWidth = 4; x.beginPath(); x.roundRect(-sw/2, -26, sw, 50, 10); x.stroke();
+  x.fillStyle = "#D9473B"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(d.stamp, 0, 0);
+  x.restore();
+  y += 70;
+  return { canvas: c, h: Math.ceil(y) };
+}
+function renderStory(d){
+  const { W, H } = IMG;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  // mint background + cream sunburst + fade
+  x.fillStyle = "#B6E2E2"; x.fillRect(0, 0, W, H);
+  const cx = W/2, cy = 1060, R = 2200;
+  x.fillStyle = "rgba(238,229,165,.6)";
+  for (let a = 0; a < 360; a += 15){
+    const r1 = a * Math.PI/180, r2 = (a + 7.5) * Math.PI/180;
+    x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + R*Math.cos(r1), cy + R*Math.sin(r1)); x.lineTo(cx + R*Math.cos(r2), cy + R*Math.sin(r2)); x.closePath(); x.fill();
+  }
+  const g = x.createRadialGradient(cx, cy, 380, cx, cy, 1250);
+  g.addColorStop(0, "rgba(182,226,226,0)"); g.addColorStop(1, "rgba(182,226,226,1)");
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  // heading
+  x.textAlign = "center"; x.textBaseline = "alphabetic"; x.font = F.rubik(900, 112);
+  [["#FA6D61", 12], ["#F5C747", 6], ["#1D1B26", 0]].forEach(([col, o]) => { x.fillStyle = col; x.fillText("Positive Spin", W/2 + o, 300 + o); });
+  x.font = F.rubik(500, 40); x.fillStyle = "#1D1B26"; x.globalAlpha = .85;
+  x.fillText("Put a Positive Spin on someone's day.", W/2, 380); x.globalAlpha = 1;
+  // receipt, scaled to fit between heading and Instagram's bottom bar
+  const r = drawReceipt(d), top = 450, maxH = 1700 - top;
+  const s = Math.min(1, maxH / (r.h + 18)), rw = r.canvas.width * s, rh = r.h * s;
+  const rx = W/2 - rw/2, ry = top + Math.max(0, (maxH - rh - 18*s) / 2);
+  x.save(); x.shadowColor = "rgba(29,27,38,.22)"; x.shadowBlur = 40; x.shadowOffsetY = 18;
+  // receipt body with torn bottom edge
+  const tooth = 32 * s, th = 18 * s;
+  x.beginPath(); x.moveTo(rx, ry); x.lineTo(rx + rw, ry); x.lineTo(rx + rw, ry + rh);
+  for (let px = rw; px > 0; px -= tooth){ x.lineTo(rx + px - tooth/2, ry + rh + th); x.lineTo(rx + Math.max(0, px - tooth), ry + rh); }
+  x.closePath(); x.fillStyle = "#FFFDF6"; x.fill(); x.restore();
+  x.save(); x.clip(); x.drawImage(r.canvas, 0, 0, r.canvas.width, r.h, rx, ry, rw, rh); x.restore();
+  return c;
+}
+async function prepareImage(){
+  if (!current) return null;
+  const inc = $("imgNote").checked;
+  const key = JSON.stringify([current.t, current.to, current.fr, inc ? current.n : "", $("rOrder").textContent]);
+  if (IMG.blob && IMG.key === key) return IMG.blob;
+  try{
+    if (document.fonts){ await Promise.all([document.fonts.load(F.rubik(900, 60)), document.fonts.load(F.rubik(500, 40)), document.fonts.load(F.mono(400, 26)), document.fonts.load(F.mono(700, 26))]); }
+  }catch(e){}
+  const canvas = renderStory(imageData(inc));
+  const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+  if (IMG.url) URL.revokeObjectURL(IMG.url);
+  IMG.blob = blob; IMG.key = key; IMG.url = URL.createObjectURL(blob);
+  return blob;
+}
+function refreshImageOptions(){
+  $("imgOpts").hidden = !(current && current.n);
+  if (current && !current.n) $("imgNote").checked = false;
+  clearTimeout(refreshImageOptions.t);
+  refreshImageOptions.t = setTimeout(prepareImage, 250);   // pre-render so sharing stays instant
+}
+function showPreview(){
+  $("previewImg").src = IMG.url;
+  $("previewDl").href = IMG.url;
+  $("preview").hidden = false;
+  $("previewClose").focus();
+}
+$("saveBtn").addEventListener("click", async () => {
+  if (!current) return;
+  const ready = IMG.blob && IMG.key === JSON.stringify([current.t, current.to, current.fr, $("imgNote").checked ? current.n : "", $("rOrder").textContent]);
+  const blob = ready ? IMG.blob : await prepareImage();
+  if (!blob) return;
+  const file = new File([blob], "positive-spin.png", { type: "image/png" });
+  const touch = matchMedia("(pointer: coarse)").matches;
+  if (touch && navigator.canShare && navigator.canShare({ files: [file] })){
+    try{ await navigator.share({ files: [file], title: "Positive Spin" }); return; }
+    catch(err){ if (err.name === "AbortError") return; }
+  }
+  if (touch){ showPreview(); return; }       // phones without file sharing: long-press to save
+  const a = document.createElement("a"); a.href = IMG.url; a.download = "positive-spin.png";
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast("Image saved.");
+});
+$("imgNote").addEventListener("change", refreshImageOptions);
+$("previewClose").addEventListener("click", () => { $("preview").hidden = true; });
+$("preview").addEventListener("click", (e) => { if (e.target.id === "preview") $("preview").hidden = true; });
+
+
+/* ---------- Live "compliments sent" counter ----------
+   Reads one number from /api/count. Hidden until the counter is live, so the page
+   works the same without it. Counts link sends only (not image saves). */
+const counter = { el: $("counter"), num: $("counterNum"), value: null, counted: new Set() };
+function showCount(n, bump){
+  if (typeof n !== "number" || !isFinite(n)) return;
+  const from = counter.value == null ? n : counter.value;
+  counter.value = n;
+  counter.el.hidden = false;
+  $("counterWord").textContent = n === 1 ? "compliment" : "compliments";
+  if (from === n){ counter.num.textContent = n.toLocaleString("en-ZA"); return; }
+  const t0 = performance.now(), dur = 700;
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur);
+    counter.num.textContent = Math.round(from + (n - from) * (1 - Math.pow(1 - k, 3))).toLocaleString("en-ZA");
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  if (bump){ counter.el.classList.remove("bump"); void counter.el.offsetWidth; counter.el.classList.add("bump"); }
+}
+async function fetchCount(){
+  if (!/^https?:$/.test(location.protocol)) return;
+  try{
+    const r = await fetch("api/count", { cache: "no-store" });
+    if (r.ok){ const j = await r.json(); showCount(j.sent, counter.value != null && j.sent > counter.value); }
+  }catch(e){}
+}
+function countSend(){
+  // one count per personalised compliment, however many buttons get tapped
+  const key = JSON.stringify([current.t, current.to, current.fr, current.n, $("rOrder").textContent]);
+  if (counter.counted.has(key)) return;
+  counter.counted.add(key);
+  if (counter.value != null) showCount(counter.value + 1, true);
+  if (!/^https?:$/.test(location.protocol)) return;
+  fetch("api/count", { method: "POST", headers: { "x-positive-spin": "1" }, keepalive: true })
+    .then(r => r.ok ? r.json() : null).then(j => { if (j) showCount(j.sent, false); }).catch(() => {});
+}
+fetchCount();
+setInterval(() => { if (!document.hidden) fetchCount(); }, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchCount(); });
+
+/* ---------- Arriving from a shared link ---------- */
+const incoming = new URLSearchParams(location.search).get("c");
+const received = incoming && decode(incoming);
+if (received){
+  const hey = received.to ? `Hey ${received.to}! ` : "";
+  const who = received.fr || "Someone";
+  $("sub").textContent = `${hey}${who} sent you a compliment. Keep it going by spinning for someone else.`;
+  chip.textContent = received.fr ? `💌 ${received.fr} wanted you to have this` : "💌 Someone wanted you to have this";
+  chip.classList.add("show");
+  memory.record(null, received.t);   // a compliment you've received counts as seen
+  spinning = true; spinBtn.disabled = true;
+  setTimeout(() => printReceipt(received), 500);
+  history.replaceState(null, "", location.pathname);
+}
+/* ---------- Site address on the receipt (fills in once deployed) ---------- */
+if (location.host) $("rSite").textContent = location.host.replace(/^www\./,"").toUpperCase();
+
+/* ---------- Keep the sunburst centred on the wheel ---------- */
+function placeBurst(){
+  const r = document.querySelector(".wheel-wrap").getBoundingClientRect();
+  document.body.style.setProperty("--by", Math.round(r.top + scrollY + r.height/2) + "px");
+}
+placeBurst();
+addEventListener("resize", placeBurst);
+document.fonts && document.fonts.ready.then(placeBurst);
+</script>
+</body>
+</html>
