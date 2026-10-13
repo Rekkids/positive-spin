@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Positive Spin</title>
 <meta name="description" content="Put a Positive Spin on someone's day.">
-<meta property="og:title" content="Positive Spin: a compliment, printed just for you">
+<meta property="og:title" content="Positive Spin: send someone a compliment today">
 <meta property="og:description" content="A free compliment wheel. No sign-up, no ads, nothing to download.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://positive-spin.vercel.app/og.png">
@@ -203,6 +203,9 @@
   .btn-wa{background:#25D366;color:var(--ink);text-decoration:none;text-align:center;flex-basis:100%}
   .btn-again{background:var(--gold)}
   .btn-save{background:var(--paper)}
+  .btn-insta{background:linear-gradient(135deg,var(--gold),var(--orange) 50%,var(--coral));color:var(--ink)}
+  .btn:disabled{opacity:.55;cursor:wait;transform:none;box-shadow:0 5px 0 var(--ink)}
+  .preview-card p b{white-space:nowrap}
   .img-opt{flex-basis:100%;text-align:center;font-size:.9rem;font-weight:500;display:flex;gap:8px;justify-content:center;align-items:center;cursor:pointer}
   .img-opt input{width:18px;height:18px;accent-color:var(--coral)}
   .preview{position:fixed;inset:0;z-index:20;background:rgba(29,27,38,.72);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -211,6 +214,8 @@
   .preview-card p{margin:12px 0;font-size:.95rem}
   .preview-actions{display:flex;gap:10px;justify-content:center}
   .preview-actions .btn{text-decoration:none;font-size:.95rem;padding:10px 18px}
+  .preview-actions .btn[hidden]{display:none}
+  .preview-card small{opacity:.75}
 
   /* Share sheet (desktop fallback) */
   .sheet{
@@ -335,7 +340,8 @@
 
 <div class="actions" id="actions">
   <button class="btn btn-share" id="shareBtn">Send to a friend</button>
-  <button class="btn btn-save" id="saveBtn">Save image</button>
+  <button class="btn btn-insta" id="instaBtn" disabled>Share to Instagram</button>
+  <button class="btn btn-save" id="saveBtn" disabled>Save image</button>
   <button class="btn btn-again" id="againBtn">Spin again</button>
   <label class="img-opt" id="imgOpts" hidden><input type="checkbox" id="imgNote"> Include the note in the image</label>
 </div>
@@ -343,7 +349,7 @@
 <div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-label="Your receipt image">
   <div class="preview-card">
     <img id="previewImg" alt="Your Positive Spin receipt">
-    <p>Press and hold the image to save it to your photos.</p>
+    <p id="previewMsg">Press and hold the image to save it to your photos.</p>
     <div class="preview-actions">
       <a class="btn btn-again" id="previewDl" download="positive-spin.png">Download</a>
       <button type="button" class="btn" id="previewClose">Close</button>
@@ -912,11 +918,15 @@ function drawReceipt(d){
   // stamp
   x.save(); x.translate(RW/2, y + 8); x.rotate(-4 * Math.PI/180);
   x.font = F.mono(700, 24); const sw = x.measureText(d.stamp).width + 36;
-  x.strokeStyle = "#D9473B"; x.lineWidth = 4; x.beginPath(); x.roundRect(-sw/2, -26, sw, 50, 10); x.stroke();
+  x.strokeStyle = "#D9473B"; x.lineWidth = 4; x.beginPath(); roundRectPath(x, -sw/2, -26, sw, 50, 10); x.stroke();
   x.fillStyle = "#D9473B"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(d.stamp, 0, 0);
   x.restore();
   y += 70;
   return { canvas: c, h: Math.ceil(y) };
+}
+function roundRectPath(x, rx, ry, w, h, r){   // works on older iPhones without ctx.roundRect
+  x.moveTo(rx + r, ry); x.arcTo(rx + w, ry, rx + w, ry + h, r); x.arcTo(rx + w, ry + h, rx, ry + h, r);
+  x.arcTo(rx, ry + h, rx, ry, r); x.arcTo(rx, ry, rx + w, ry, r); x.closePath();
 }
 function renderStory(d){
   const { W, H } = IMG;
@@ -939,7 +949,7 @@ function renderStory(d){
   x.font = F.rubik(500, 40); x.fillStyle = "#1D1B26"; x.globalAlpha = .85;
   x.fillText("Put a Positive Spin on someone's day.", W/2, 380); x.globalAlpha = 1;
   // receipt, scaled to fit between heading and Instagram's bottom bar
-  const r = drawReceipt(d), top = 450, maxH = 1700 - top;
+  const r = drawReceipt(d), top = 430, maxH = 1560 - top;
   const s = Math.min(1, maxH / (r.h + 18)), rw = r.canvas.width * s, rh = r.h * s;
   const rx = W/2 - rw/2, ry = top + Math.max(0, (maxH - rh - 18*s) / 2);
   x.save(); x.shadowColor = "rgba(29,27,38,.22)"; x.shadowBlur = 40; x.shadowOffsetY = 18;
@@ -949,50 +959,100 @@ function renderStory(d){
   for (let px = rw; px > 0; px -= tooth){ x.lineTo(rx + px - tooth/2, ry + rh + th); x.lineTo(rx + Math.max(0, px - tooth), ry + rh); }
   x.closePath(); x.fillStyle = "#FFFDF6"; x.fill(); x.restore();
   x.save(); x.clip(); x.drawImage(r.canvas, 0, 0, r.canvas.width, r.h, rx, ry, rw, rh); x.restore();
+  // "spin yours" pill, kept clear of Instagram's reply bar at the bottom
+  const label = "Spin yours at " + d.site.toLowerCase();
+  x.font = F.mono(700, 34); const pw = Math.min(W - 80, x.measureText(label).width + 80), ph = 84, px = W/2 - pw/2, py = 1612;
+  x.fillStyle = "rgba(29,27,38,.25)"; x.beginPath(); roundRectPath(x, px, py + 8, pw, ph, 42); x.fill();
+  x.fillStyle = "#1D1B26"; x.beginPath(); roundRectPath(x, px, py, pw, ph, 42); x.fill();
+  x.fillStyle = "#F5C747"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(label, W/2, py + ph/2 + 2);
   return c;
+}
+function imageKey(){
+  return JSON.stringify([current.t, current.to, current.fr, $("imgNote").checked ? current.n : "", $("rOrder").textContent]);
 }
 async function prepareImage(){
   if (!current) return null;
-  const inc = $("imgNote").checked;
-  const key = JSON.stringify([current.t, current.to, current.fr, inc ? current.n : "", $("rOrder").textContent]);
+  const key = imageKey();
   if (IMG.blob && IMG.key === key) return IMG.blob;
+  if (IMG.pending === key) return null;
+  IMG.pending = key; setImageButtons(false);
   try{
     if (document.fonts){ await Promise.all([document.fonts.load(F.rubik(900, 60)), document.fonts.load(F.rubik(500, 40)), document.fonts.load(F.mono(400, 26)), document.fonts.load(F.mono(700, 26))]); }
   }catch(e){}
-  const canvas = renderStory(imageData(inc));
-  const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
-  if (IMG.url) URL.revokeObjectURL(IMG.url);
-  IMG.blob = blob; IMG.key = key; IMG.url = URL.createObjectURL(blob);
-  return blob;
+  try{
+    const canvas = renderStory(imageData($("imgNote").checked));
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) throw new Error("no image");
+    if (IMG.url) URL.revokeObjectURL(IMG.url);
+    IMG.blob = blob; IMG.key = key; IMG.url = URL.createObjectURL(blob);
+    IMG.dataUrl = canvas.toDataURL("image/png");   // for long-press saving in in-app browsers
+    IMG.file = new File([blob], "positive-spin.png", { type: "image/png", lastModified: Date.now() });
+  }catch(e){ IMG.blob = null; }
+  if (IMG.pending === key) IMG.pending = "";
+  setImageButtons(!!(IMG.blob && IMG.key === imageKey()));
+  return IMG.blob;
+}
+function setImageButtons(ready){
+  ["saveBtn", "instaBtn"].forEach(id => { $(id).disabled = !ready; });
+  $("saveBtn").textContent = ready ? "Save image" : "Preparing image…";
 }
 function refreshImageOptions(){
   $("imgOpts").hidden = !(current && current.n);
   if (current && !current.n) $("imgNote").checked = false;
+  if (current && (!IMG.blob || IMG.key !== imageKey())) setImageButtons(false);
   clearTimeout(refreshImageOptions.t);
-  refreshImageOptions.t = setTimeout(prepareImage, 250);   // pre-render so sharing stays instant
+  refreshImageOptions.t = setTimeout(prepareImage, 150);   // pre-render, so tapping a button can share instantly
 }
-function showPreview(){
-  $("previewImg").src = IMG.url;
+
+/* Where are we? Phones and in-app browsers each need a different way to save. */
+const UA = navigator.userAgent || "";
+const ENV = {
+  touch: matchMedia("(pointer: coarse)").matches,
+  ios: /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1),
+  inApp: /Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly|Snapchat/i.test(UA)
+};
+function siteLink(){ return location.origin + location.pathname; }
+
+function showPreview(mode){
+  $("previewImg").src = IMG.dataUrl || IMG.url;
   $("previewDl").href = IMG.url;
+  const how = ENV.ios ? "Press and hold the image, then tap <b>Save to Photos</b>." :
+              "Press and hold the image, then tap <b>Download image</b>.";
+  const insta = mode === "insta" ? " Then open Instagram, add it to your Story, and use a <b>Link sticker</b> (the link is already copied)." : "";
+  const tip = ENV.inApp ? "<br><small>Tip: if that doesn't work, tap the <b>•••</b> menu and choose <b>Open in browser</b>.</small>" : "";
+  $("previewMsg").innerHTML = how + insta + tip;
+  $("previewDl").hidden = ENV.ios || ENV.inApp;   // iPhones and in-app browsers can't download files properly
   $("preview").hidden = false;
   $("previewClose").focus();
 }
-$("saveBtn").addEventListener("click", async () => {
+
+function shareImage(mode){
   if (!current) return;
-  const ready = IMG.blob && IMG.key === JSON.stringify([current.t, current.to, current.fr, $("imgNote").checked ? current.n : "", $("rOrder").textContent]);
-  const blob = ready ? IMG.blob : await prepareImage();
-  if (!blob) return;
-  const file = new File([blob], "positive-spin.png", { type: "image/png" });
-  const touch = matchMedia("(pointer: coarse)").matches;
-  if (touch && navigator.canShare && navigator.canShare({ files: [file] })){
-    try{ await navigator.share({ files: [file], title: "Positive Spin" }); return; }
-    catch(err){ if (err.name === "AbortError") return; }
+  if (!IMG.blob || IMG.key !== imageKey()){   // not ready yet: never make people wait inside the tap
+    prepareImage(); showToast("One moment, printing your image…"); return;
   }
-  if (touch){ showPreview(); return; }       // phones without file sharing: long-press to save
+  if (mode === "insta" && navigator.clipboard){ navigator.clipboard.writeText(siteLink()).catch(() => {}); }
+  const file = IMG.file;
+  const canShareFile = !ENV.inApp && navigator.canShare && navigator.canShare({ files: [file] });
+  if (canShareFile){
+    // Share the image on its own: adding a title or text hides "Save Image" on iPhones.
+    navigator.share({ files: [file] }).then(() => {
+      showToast(mode === "insta" ? "Nice! In your Story, add a Link sticker and paste the link." : "Done!");
+    }).catch(err => {
+      toast.classList.remove("show");
+      if (err && err.name !== "AbortError") showPreview(mode);
+    });
+    if (mode === "insta") showToast("Pick Instagram, then Story. The site link is copied for a Link sticker.");
+    return;
+  }
+  if (ENV.touch || ENV.inApp){ showPreview(mode); return; }
+  // computers: download the file
   const a = document.createElement("a"); a.href = IMG.url; a.download = "positive-spin.png";
   document.body.appendChild(a); a.click(); a.remove();
-  showToast("Image saved.");
-});
+  showToast(mode === "insta" ? "Image saved and link copied. Post it from Instagram on your phone." : "Image saved.");
+}
+$("saveBtn").addEventListener("click", () => shareImage("save"));
+$("instaBtn").addEventListener("click", () => shareImage("insta"));
 $("imgNote").addEventListener("change", refreshImageOptions);
 $("previewClose").addEventListener("click", () => { $("preview").hidden = true; });
 $("preview").addEventListener("click", (e) => { if (e.target.id === "preview") $("preview").hidden = true; });
