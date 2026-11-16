@@ -69,10 +69,13 @@
   /* Header */
   header{text-align:center;margin-bottom:18px}
   h1{
-    font-weight:900;font-size:clamp(2rem,8vw,3.2rem);line-height:.95;margin:0;
+    font-weight:900;font-size:clamp(2.8rem,14vw,4.4rem);line-height:.95;margin:0;
     letter-spacing:-.02em;
     text-shadow:3px 3px 0 var(--gold), 6px 6px 0 var(--coral);
   }
+  /* centre the word itself; the dots hang off the end so they don't pull it sideways */
+  h1 .pst{position:relative;display:inline-block;left:-3px}
+  h1 .dots{position:absolute;left:100%;bottom:0}
   .sub{margin:14px auto 0;font-weight:500;font-size:1.05rem;opacity:.85;max-width:30ch;text-wrap:balance}
 
   /* Flavour picker: big cards on landing, a compact switcher once chosen */
@@ -322,8 +325,8 @@
 <header>
   <p class="counter" id="counter" hidden aria-live="polite"><span class="num" id="counterNum">0</span> <span id="counterWord">compliments</span> sent</p>
   <p class="tally" id="tally" hidden></p>
-  <h1>Positive<br>Spin</h1>
-  <p class="sub" id="sub">Put a Positive Spin on someone's day.</p>
+  <h1><span class="pst">Psssst<span class="dots" aria-hidden="true">…</span></span></h1>
+  <p class="sub" id="sub">Spin the wheel &amp; send it.</p>
 </header>
 
 <nav class="flavours" id="flavours" aria-label="Choose a flavour">
@@ -787,7 +790,7 @@ function setMode(key, opts = {}){
   buildWheel();
   if (!opts.keepReceipt){
     hideReceipt(); chip.classList.remove("show"); current = null;
-    $("sub").textContent = "Put a Positive Spin on someone's day.";
+    $("sub").textContent = "Spin the wheel & send it.";
   }
   const first = $("app").hidden;
   $("app").hidden = false;
@@ -1006,7 +1009,7 @@ function readComposer(){
   setPersonal(current);
   refreshImageOptions();
   // keep the WhatsApp link ready, so tapping it opens WhatsApp straight away
-  $("waDirect").href = "https://wa.me/?text=" + encodeURIComponent(shareMessage(current, "wa") + " " + shareUrl(current));
+  $("waDirect").href = "https://wa.me/?text=" + encodeURIComponent(shareMessage(current, "wa") + "\n" + shareUrl(current));
 }
 
 $("shareBtn").addEventListener("click", () => {
@@ -1034,7 +1037,7 @@ function shareMessage(c, style){
   const intro = MODES[modeOf(c.m)].intro;
   const lines = [c.to ? `Hi ${c.to}, ${intro.charAt(0).toLowerCase() + intro.slice(1)}` : intro, "", quote];
   if (c.n) lines.push("", c.n);
-  lines.push("", "Made with love in Cape Town by Positive Spin, a free compliment wheel. Your receipt is here if you'd like to see it:");
+  lines.push("", "Made with love in Cape Town. Send a PS to someone today. It's cute.");
   return lines.join("\n");
 }
 
