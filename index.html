@@ -6,13 +6,13 @@
 <title>Positive Spin</title>
 <meta name="description" content="Put a Positive Spin on someone's day.">
 <meta property="og:title" content="Positive Spin: send someone a compliment today">
-<meta property="og:description" content="A free compliment wheel. No sign-up, no ads, nothing to download.">
+<meta property="og:description" content="A free compliment wheel. Friend Zone, Flirty or Sarcy. No sign-up, no ads, nothing to download.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://positive-spin.vercel.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#B6E2E2">
+<meta name="theme-color" id="themeColor" content="#B6E2E2">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
   /* Fonts are self-hosted next to this page (no third-party requests). Missing files fall back to system fonts. */
@@ -21,7 +21,7 @@
   @font-face{font-family:"Space Mono";src:url("SpaceMono-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
 
   :root{
-    --bg:#B6E2E2;        /* jagged ice */
+    --bg:#B6E2E2;        /* changes per flavour: jagged ice / blush / apricot */
     --ink:#1D1B26;
     --paper:#FFFDF6;
     --paper-line:#D9D3C3;
@@ -49,17 +49,22 @@
     display:flex;flex-direction:column;align-items:center;
     padding:28px 16px 56px;
     overflow-x:hidden;
+    transition:background-color .4s ease;
   }
+  main{display:flex;flex-direction:column;align-items:center;width:100%}
 
   /* Live counter */
   .counter{
-    display:inline-flex;align-items:center;gap:8px;margin:0 0 16px;padding:7px 14px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:8px;margin:0 0 8px;padding:7px 14px;border-radius:999px;
     background:var(--ink);color:var(--cream);font-family:"Space Mono",monospace;font-size:.82rem;letter-spacing:.04em;
     box-shadow:0 4px 0 rgba(29,27,38,.25);
   }
   .counter .num{font-weight:700;color:var(--gold);display:inline-block;font-variant-numeric:tabular-nums}
   .counter.bump .num{animation:bump .5s ease}
   @keyframes bump{40%{transform:scale(1.35)}}
+  .tally{margin:0 0 16px;display:flex;gap:6px 14px;justify-content:center;flex-wrap:wrap;
+    font-family:"Space Mono",monospace;font-size:.74rem;font-weight:700;letter-spacing:.03em;font-variant-numeric:tabular-nums}
+  .tally span{white-space:nowrap}
 
   /* Header */
   header{text-align:center;margin-bottom:18px}
@@ -69,6 +74,36 @@
     text-shadow:3px 3px 0 var(--gold), 6px 6px 0 var(--coral);
   }
   .sub{margin:14px auto 0;font-weight:500;font-size:1.05rem;opacity:.85;max-width:30ch;text-wrap:balance}
+
+  /* Flavour picker: big cards on landing, a compact switcher once chosen */
+  .flavours{width:min(420px,92vw);margin:0 0 20px;text-align:center}
+  .flavours-title{font-family:"Space Mono",monospace;font-weight:700;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;margin:4px 0 12px}
+  .flavour-row{display:grid;gap:12px}
+  .flavour{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+    background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:18px;
+    padding:14px 16px;box-shadow:0 5px 0 var(--ink);font-family:"Rubik",sans-serif;
+    transition:transform .1s ease, box-shadow .1s ease, background-color .2s ease;
+  }
+  .flavour:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--ink)}
+  .flavour:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+  .flavour:focus-visible{outline:4px solid var(--coral);outline-offset:3px}
+  .flavour .emo{flex:none;width:54px;height:54px;border-radius:14px;border:3px solid var(--ink);background:var(--swatch);
+    display:grid;place-items:center;font-size:1.7rem;line-height:1}
+  .flavour .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .flavour .name{font-weight:900;font-size:1.3rem;letter-spacing:.01em}
+  .flavour .tag{font-size:.92rem;opacity:.78}
+  .flavour .eg{font-family:"Space Mono",monospace;font-size:.74rem;opacity:.65;margin-top:3px}
+  .flavours.compact{margin-bottom:14px}
+  .flavours.compact .flavours-title,.flavours.compact .tag,.flavours.compact .eg{display:none}
+  .flavours.compact .flavour-row{grid-template-columns:repeat(3,1fr);gap:8px}
+  .flavours.compact .flavour{justify-content:center;gap:6px;padding:8px 6px;border-radius:999px;box-shadow:0 3px 0 var(--ink)}
+  .flavours.compact .flavour:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+  .flavours.compact .emo{width:auto;height:auto;border:0;background:none;font-size:1.05rem}
+  .flavours.compact .name{font-size:.95rem;white-space:nowrap}
+  @media (max-width:400px){ .flavours.compact .name{font-size:.82rem} .flavours.compact .flavour{padding:8px 4px;gap:4px} }
+  .flavour[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+  .flavours.compact .flavour[aria-pressed="true"]{box-shadow:0 3px 0 rgba(29,27,38,.35)}
 
   /* Wheel */
   .wheel-wrap{position:relative;width:min(380px,88vw);aspect-ratio:1;margin:8px 0 22px}
@@ -98,7 +133,7 @@
   .hub:hover{transform:translate(-50%,-52%)}
   .hub:active{transform:translate(-50%,-46%);box-shadow:0 1px 0 var(--ink)}
   .hub:disabled{cursor:wait;opacity:.9}
-  /* idle "tap me" motion: gentle breathe + gold ripple */
+  /* idle "tap me" motion: gentle breathe + ripple */
   .hub{animation:hubBreathe 2.4s ease-in-out infinite}
   .hub::after{
     content:"";position:absolute;inset:-6px;border-radius:50%;
@@ -158,6 +193,7 @@
   .receipt .center{text-align:center}
   .receipt .brand{font-weight:700;font-size:.95rem;letter-spacing:.08em}
   .receipt .muted{opacity:.6}
+  .receipt .edition{font-weight:700;letter-spacing:.12em;margin-top:2px}
   .rule{border:0;border-top:2px dashed var(--paper-line);margin:12px 0}
   .row{display:flex;justify-content:space-between;gap:12px}
   .item-cat{font-weight:700;text-transform:uppercase}
@@ -277,6 +313,7 @@
     .hub,.hub::after,.counter.bump .num{animation:none}
     #wheel{transition-duration:1.2s}
     .slot{transition-duration:.6s}
+    body{transition:none}
   }
 </style>
 </head>
@@ -284,67 +321,105 @@
 
 <header>
   <p class="counter" id="counter" hidden aria-live="polite"><span class="num" id="counterNum">0</span> <span id="counterWord">compliments</span> sent</p>
+  <p class="tally" id="tally" hidden></p>
   <h1>Positive<br>Spin</h1>
   <p class="sub" id="sub">Put a Positive Spin on someone's day.</p>
 </header>
 
-<div class="wheel-wrap">
-  <svg class="pointer" viewBox="0 0 44 52" aria-hidden="true">
-    <path d="M22 50 L3 10 Q2 2 10 2 L34 2 Q42 2 41 10 Z" fill="#FFFDF6" stroke="#1D1B26" stroke-width="4" stroke-linejoin="round"/>
-    <circle cx="22" cy="14" r="5" fill="#FA6D61"/>
-  </svg>
-  <div class="wheel-clip"><svg id="wheel" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
-  <button class="hub" id="spinBtn" aria-label="Spin the wheel">SPIN</button>
-</div>
+<nav class="flavours" id="flavours" aria-label="Choose a flavour">
+  <p class="flavours-title">Pick your flavour</p>
+  <div class="flavour-row" id="flavourRow"></div>
+</nav>
 
-<span class="chip" id="chip">💌 Someone wanted you to have this</span>
-
-<div class="printer-area">
-  <div class="printer" id="printer">
-    <span class="printer-label" id="printerLabel">COMPLIMENT-O-MATIC</span>
-    <span class="led"></span>
+<main id="app" hidden>
+  <div class="wheel-wrap">
+    <svg class="pointer" viewBox="0 0 44 52" aria-hidden="true">
+      <path d="M22 50 L3 10 Q2 2 10 2 L34 2 Q42 2 41 10 Z" fill="#FFFDF6" stroke="#1D1B26" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="22" cy="14" r="5" fill="#FA6D61"/>
+    </svg>
+    <div class="wheel-clip"><svg id="wheel" viewBox="0 0 400 400" aria-hidden="true"></svg></div>
+    <button class="hub" id="spinBtn" aria-label="Spin the wheel">SPIN</button>
   </div>
-  <div class="slot" id="slot">
-    <div class="slot-inner">
-      <div class="receipt" id="receipt">
-        <div class="center brand">★ POSITIVE SPIN ★</div>
-        <div class="center muted">FROM THE COMPLIMENT-O-MATIC</div>
-        <div class="center muted">FREE OF CHARGE SINCE FOREVER</div>
-        <hr class="rule">
-        <div class="row"><span>DATE <span id="rDate"></span></span><span>TIME <span id="rTime"></span></span></div>
-        <div class="row"><span>ORDER</span><span id="rOrder"></span></div>
-        <div class="row" id="rToRow" hidden><span>FOR</span><b class="who" id="rTo"></b></div>
-        <div class="row" id="rFromRow" hidden><span>FROM</span><b class="who" id="rFrom"></b></div>
-        <hr class="rule">
-        <div class="row"><span>1 x <span class="item-cat" id="rCat"></span></span><span>0.00</span></div>
-        <div class="compliment" id="rText"></div>
-        <div id="rNoteWrap" hidden>
+
+  <span class="chip" id="chip">💌 Someone wanted you to have this</span>
+
+  <div class="printer-area">
+    <div class="printer" id="printer">
+      <span class="printer-label" id="printerLabel">COMPLIMENT-O-MATIC</span>
+      <span class="led"></span>
+    </div>
+    <div class="slot" id="slot">
+      <div class="slot-inner">
+        <div class="receipt" id="receipt">
+          <div class="center brand">★ POSITIVE SPIN ★</div>
+          <div class="center muted">FROM THE COMPLIMENT-O-MATIC</div>
+          <div class="center muted">FREE OF CHARGE SINCE FOREVER</div>
+          <div class="center edition" id="rEdition">FRIEND ZONE EDITION</div>
           <hr class="rule">
-          <div class="muted" id="rNoteLabel">A NOTE FOR YOU:</div>
-          <div class="note" id="rNote"></div>
+          <div class="row"><span>DATE <span id="rDate"></span></span><span>TIME <span id="rTime"></span></span></div>
+          <div class="row"><span>ORDER</span><span id="rOrder"></span></div>
+          <div class="row" id="rToRow" hidden><span>FOR</span><b class="who" id="rTo"></b></div>
+          <div class="row" id="rFromRow" hidden><span>FROM</span><b class="who" id="rFrom"></b></div>
+          <hr class="rule">
+          <div class="row"><span>1 x <span class="item-cat" id="rCat"></span></span><span>0.00</span></div>
+          <div class="compliment" id="rText"></div>
+          <div id="rNoteWrap" hidden>
+            <hr class="rule">
+            <div class="muted" id="rNoteLabel">A NOTE FOR YOU:</div>
+            <div class="note" id="rNote"></div>
+          </div>
+          <hr class="rule">
+          <div class="row"><span>SUBTOTAL</span><span>PRICELESS</span></div>
+          <div class="row"><span>TAX</span><span>NONE</span></div>
+          <div class="row"><b>TOTAL</b><b>MORE THAN ENOUGH</b></div>
+          <hr class="rule">
+          <div class="barcode"></div>
+          <div class="center">THANK YOU, COME AGAIN</div>
+          <div class="center site-url">REFILLS ARE FREE<br><b id="rSite">POSITIVE SPIN</b></div>
+          <div class="center"><span class="stamp" id="rStamp">100% TRUE</span></div>
         </div>
-        <hr class="rule">
-        <div class="row"><span>SUBTOTAL</span><span>PRICELESS</span></div>
-        <div class="row"><span>TAX</span><span>NONE</span></div>
-        <div class="row"><b>TOTAL</b><b>MORE THAN ENOUGH</b></div>
-        <hr class="rule">
-        <div class="barcode"></div>
-        <div class="center">THANK YOU, COME AGAIN</div>
-        <div class="center site-url">REFILLS ARE FREE<br><b id="rSite">POSITIVE SPIN</b></div>
-        <div class="center"><span class="stamp" id="rStamp">100% TRUE</span></div>
+        <div class="tear"></div>
       </div>
-      <div class="tear"></div>
     </div>
   </div>
-</div>
 
-<div class="actions" id="actions">
-  <button class="btn btn-share" id="shareBtn">Send to a friend</button>
-  <button class="btn btn-insta" id="instaBtn" disabled>Share to Instagram</button>
-  <button class="btn btn-save" id="saveBtn" disabled>Save image</button>
-  <button class="btn btn-again" id="againBtn">Spin again</button>
-  <label class="img-opt" id="imgOpts" hidden><input type="checkbox" id="imgNote"> Include the note in the image</label>
-</div>
+  <div class="actions" id="actions">
+    <button class="btn btn-share" id="shareBtn">Send to a friend</button>
+    <button class="btn btn-insta" id="instaBtn" disabled>Share to Instagram</button>
+    <button class="btn btn-save" id="saveBtn" disabled>Save image</button>
+    <button class="btn btn-again" id="againBtn">Spin again</button>
+    <label class="img-opt" id="imgOpts" hidden><input type="checkbox" id="imgNote"> Include the note in the image</label>
+  </div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <h2>Make it personal</h2>
+    <p class="hint">All optional, but a name and a few words of your own help them know it's really from you.</p>
+    <div class="fields">
+      <div class="field">
+        <label for="toName">Their name</label>
+        <input id="toName" maxlength="30" placeholder="Sam">
+      </div>
+      <div class="field">
+        <label for="fromName">Your name</label>
+        <input id="fromName" maxlength="30" placeholder="Leave blank to stay a mystery">
+      </div>
+      <div class="field full">
+        <label for="noteText">Add a note</label>
+        <textarea id="noteText" maxlength="120" placeholder="Saw this and thought of you."></textarea>
+        <span class="count" id="noteCount">0 / 120</span>
+      </div>
+    </div>
+    <div class="composer-actions">
+      <a class="btn btn-wa" id="waDirect" href="https://wa.me/" target="_blank" rel="noopener">Send on WhatsApp</a>
+      <button type="submit" class="btn btn-share">More ways to send</button>
+      <button type="button" class="link-btn" id="cancelBtn">Cancel</button>
+    </div>
+    <div class="sheet" id="sheet">
+      <button type="button" class="btn" id="copyBtn">Copy link</button>
+      <a class="btn" id="mailBtn">Email</a>
+    </div>
+  </form>
+</main>
 
 <div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-label="Your receipt image">
   <div class="preview-card">
@@ -357,35 +432,6 @@
   </div>
 </div>
 
-<form class="composer" id="composer" autocomplete="off">
-  <h2>Make it personal</h2>
-  <p class="hint">All optional, but a name and a few words of your own help them know it's really from you.</p>
-  <div class="fields">
-    <div class="field">
-      <label for="toName">Their name</label>
-      <input id="toName" maxlength="30" placeholder="Sam">
-    </div>
-    <div class="field">
-      <label for="fromName">Your name</label>
-      <input id="fromName" maxlength="30" placeholder="Leave blank to stay a mystery">
-    </div>
-    <div class="field full">
-      <label for="noteText">Add a note</label>
-      <textarea id="noteText" maxlength="120" placeholder="Saw this and thought of you."></textarea>
-      <span class="count" id="noteCount">0 / 120</span>
-    </div>
-  </div>
-  <div class="composer-actions">
-    <a class="btn btn-wa" id="waDirect" href="https://wa.me/" target="_blank" rel="noopener">Send on WhatsApp</a>
-    <button type="submit" class="btn btn-share">More ways to send</button>
-    <button type="button" class="link-btn" id="cancelBtn">Cancel</button>
-  </div>
-  <div class="sheet" id="sheet">
-    <button type="button" class="btn" id="copyBtn">Copy link</button>
-    <a class="btn" id="mailBtn">Email</a>
-  </div>
-</form>
-
 <div class="toast" id="toast" role="status"></div>
 <div class="sr-only" aria-live="polite" id="live"></div>
 
@@ -395,7 +441,7 @@
     <summary>How it works</summary>
     <div class="body">
       <p><b>We don't keep anything.</b> The names and note you add travel inside the link you send, straight to your friend. They're never saved on a server, and we never see them.</p>
-      <p><b>We count one thing.</b> How many compliments have been sent: a single number, with nothing attached to it.</p>
+      <p><b>We count one thing.</b> How many compliments have been sent, and in which flavour: a few numbers, with nothing attached to them.</p>
       <p><b>Your device remembers what you've seen</b> so you don't get repeats. That list stays on your device and is never sent anywhere.</p>
       <p><b>Nobody makes money from this.</b> No ads, no sign-ups, no selling anything. It exists because a small kind word, sent at the right moment, can change someone's day.</p>
     </div>
@@ -405,12 +451,11 @@
 
 <script>
 /* ============================================================
-   COMPLIMENTS
-   Placeholders: replace the items in each category with your own.
-   Keep 8 categories for the wheel, or change the count freely
-   (the wheel redraws itself to match).
+   COMPLIMENTS, BY FLAVOUR
+   Each flavour has its own wheel categories. Change the count
+   freely: the wheel redraws itself to match.
    ============================================================ */
-const DATA = [
+const FRIENDLY = [
   { label:"SMILE",    color:"#FA6D61", ink:"#1D1B26", items:[
     "Your smile is contagious.",
     "You could get the grumpiest baby to grin.",
@@ -513,7 +558,7 @@ const DATA = [
     "You're the friend everyone hopes to have.",
     "The only problem with knowing you is not knowing you sooner."
   ]},
-  { label:"CHEEKY",   color:"#A23B72", ink:"#EEE5A5", items:[
+  { label:"PLAYFUL",  color:"#A23B72", ink:"#EEE5A5", items:[
     "You're one of the few people nobody has to worry about. Thank you for that.",
     "You're as awesome as you secretly think you are.",
     "You ruin a perfectly good bad mood. Every single time.",
@@ -530,7 +575,7 @@ const DATA = [
     "You could win an argument with a GPS.",
     "In a heist movie, you'd be the one who actually has a plan.",
     "If aliens landed, you'd be the one we'd send to say hello.",
-    "You'd make it out of any horror movie alive. And you'd bring snacks.",
+    "You could be trusted to load the dishwasher properly. There is no higher honour.",
     "If the lift got stuck, you'd be the reason it turned into a party.",
     "Even during load shedding, you somehow keep the vibe switched on.",
     "You could turn a rained-out braai into a festival.",
@@ -546,45 +591,165 @@ const DATA = [
   ]}
 ];
 
-const STAMPS = ["100% TRUE","VERIFIED","CERTIFIED","NO RETURNS NEEDED","FACT"];
+const FLIRTY = [
+  { label:"SWOON",  color:"#FA6D61", ink:"#1D1B26", items:[
+    "If you were a song, I'd have you on repeat.",
+    "Are you a sunset? Because I can't stop looking.",
+    "Somewhere, a rom-com is missing its lead.",
+    "You make my heart do that little skip thing.",
+    "You give butterflies overtime.",
+    "You make my cheeks hurt from smiling."
+  ]},
+  { label:"CRUSH",  color:"#F79A93", ink:"#1D1B26", items:[
+    "You're the reason I check my phone with a grin.",
+    "I'd swipe right. Twice. Just to be sure.",
+    "You're my favourite notification.",
+    "Coffee is great, but you're my favourite reason to wake up.",
+    "Just thinking about you made today better. Thought you should know."
+  ]},
+  { label:"CHARM",  color:"#D9473B", ink:"#FFFDF6", items:[
+    "You've got a smile that should come with a warning label.",
+    "You're dangerously good at being you.",
+    "You have a \"stop scrolling\" kind of face.",
+    "Your eyes should be illegal on a weekday.",
+    "If charm were electricity, you'd end load shedding.",
+    "You're proof the universe has excellent taste."
+  ]},
+  { label:"SPARK",  color:"#FA6D61", ink:"#1D1B26", items:[
+    "You make \"just one more drink\" sound like a great idea.",
+    "You look like trouble. The good kind.",
+    "You're the plot twist I didn't see coming.",
+    "You're the kind of distraction I don't mind.",
+    "You've stolen a few of my thoughts today. Actually, keep them.",
+    "Are you a vinyl record? Because you spin me right round."
+  ]},
+  { label:"DATE",   color:"#F79A93", ink:"#1D1B26", items:[
+    "I'd share my last slice of pizza with you. That's serious.",
+    "You make ordinary Tuesdays feel like Fridays.",
+    "I'd let you pick the music on a road trip. Every time.",
+    "You could make a queue at Home Affairs feel romantic.",
+    "I'd dance badly in public for you.",
+    "You make \"see you later\" sound like something to look forward to."
+  ]},
+  { label:"CUTE",   color:"#D9473B", ink:"#FFFDF6", items:[
+    "Your laugh is my favourite sound effect.",
+    "You're cuter than a puppy in a raincoat.",
+    "Every room gets better the moment you walk in.",
+    "You'd look good in anything. Even a hairnet.",
+    "You're like a playlist I never skip.",
+    "Even your typos are cute."
+  ]}
+];
+
+const CHEEKY = [
+  { label:"SASS",   color:"#A23B72", ink:"#EEE5A5", items:[
+    "You're surprisingly tolerable before coffee.",
+    "Honestly, you're the least annoying person I know.",
+    "You're so humble, it's almost annoying.",
+    "If you were any more delightful, I'd have to unfollow you.",
+    "You're a 10. On a scale of 1 to 10. Shocking, I know.",
+    "You're annoyingly easy to like."
+  ]},
+  { label:"CHAOS",  color:"#FFA142", ink:"#1D1B26", items:[
+    "You'd survive a zombie apocalypse. Mostly by talking them to death.",
+    "You have the energy of a golden retriever and the attention span to match.",
+    "You're my favourite bad influence.",
+    "You're proof that chaos can be charming.",
+    "You're the friend I'd call in an emergency. Also usually the cause of it.",
+    "Too cool for school, still can't find your keys."
+  ]},
+  { label:"HONEST", color:"#F5C747", ink:"#1D1B26", items:[
+    "You're not as weird as everyone says. Slightly less.",
+    "You're a genius. Occasionally. On a good day.",
+    "You're doing great, all things considered.",
+    "You're smarter than you look. And you look pretty smart.",
+    "You're handling adulthood as well as any of us. Which is barely. Well done.",
+    "I'd say you're perfect, but you'd never let me hear the end of it."
+  ]},
+  { label:"ROAST",  color:"#A23B72", ink:"#EEE5A5", items:[
+    "Your cooking is improving. The smoke alarm agrees.",
+    "Your dance moves are... brave. Keep going.",
+    "You've redefined \"five minutes late\", and I love you anyway.",
+    "Your plants are still alive. Impressive.",
+    "Your singing in the car is legendary. Not good, but legendary.",
+    "Your sense of direction is terrible, but you always find the good stuff."
+  ]},
+  { label:"LEGEND", color:"#FFA142", ink:"#1D1B26", items:[
+    "You're one of my favourite people, and I don't even like people.",
+    "I'd help you move house. I'd complain the whole time, but I'd do it.",
+    "You're the only person I'd share my snacks with. Under protest.",
+    "You peaked at exactly the right time: now.",
+    "You're like a good braai. Takes forever, totally worth it.",
+    "You're a lot. In the best possible way.",
+    "You're basically a national treasure. Slightly dusty, but a treasure."
+  ]},
+  { label:"TRUTH",  color:"#F5C747", ink:"#1D1B26", items:[
+    "You're not lazy, you're in energy-saving mode.",
+    "You're the reason group chats have a mute button. I'd never mute you though.",
+    "You'd win gold at overthinking. Proud of you.",
+    "I've seen your search history and I still respect you."
+  ]}
+];
+
+/* ---------- Flavours ----------
+   Rename a flavour by changing "name" here; everything else follows. */
+const MODES = {
+  friendly: { name:"Friend Zone", emoji:"💛", tagline:"Safe for coworkers to grandma.", eg:"\"You light up the room.\"",
+              bg:"#B6E2E2", swatch:"#F5C747", intro:"This one's for you:",
+              stamps:["100% TRUE","VERIFIED","CERTIFIED","NO RETURNS NEEDED","FACT"], cats:FRIENDLY },
+  flirty:   { name:"Flirty",   emoji:"😘", tagline:"Feelin' the flutters?", eg:"\"You give butterflies overtime.\"",
+              bg:"#F9D3CD", swatch:"#FA6D61", intro:"This one's a little flirty:",
+              stamps:["SEALED WITH A WINK","HANDLE WITH CARE","100% SWOON","CERTIFIED CRUSH"], cats:FLIRTY },
+  cheeky:   { name:"Sarcy",    emoji:"😏", tagline:"Technically a compliment.", eg:"\"You're surprisingly tolerable before coffee.\"",
+              bg:"#FFD7A0", swatch:"#A23B72", intro:"This one's sarcy, but true:",
+              stamps:["NO REFUNDS","MOSTLY TRUE","SARCASM INCLUDED","LOVINGLY ROASTED"], cats:CHEEKY }
+};
+let MODE = "friendly";
+const cats = () => MODES[MODE].cats;
+const modeOf = m => (MODES[m] ? m : "friendly");
 
 /* ---------- Build the wheel ---------- */
 const NS = "http://www.w3.org/2000/svg";
 const wheel = document.getElementById("wheel");
-const SEG = 360 / DATA.length;
 const C = 200, R = 196;
+let SEG = 36;
 
 function pt(deg, r){ const a = (deg - 90) * Math.PI / 180; return [C + r*Math.cos(a), C + r*Math.sin(a)]; }
 
-DATA.forEach((d, i) => {
-  const [x0,y0] = pt(i*SEG, R), [x1,y1] = pt((i+1)*SEG, R);
-  const path = document.createElementNS(NS, "path");
-  path.setAttribute("d", `M${C} ${C} L${x0} ${y0} A${R} ${R} 0 ${SEG>180?1:0} 1 ${x1} ${y1} Z`);
-  path.setAttribute("fill", d.color);
-  path.setAttribute("stroke", "#EEE5A5");
-  path.setAttribute("stroke-width", "4");
-  wheel.appendChild(path);
+function buildWheel(){
+  const data = cats();
+  SEG = 360 / data.length;
+  wheel.replaceChildren();
+  data.forEach((d, i) => {
+    const [x0,y0] = pt(i*SEG, R), [x1,y1] = pt((i+1)*SEG, R);
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", `M${C} ${C} L${x0} ${y0} A${R} ${R} 0 ${SEG>180?1:0} 1 ${x1} ${y1} Z`);
+    path.setAttribute("fill", d.color);
+    path.setAttribute("stroke", "#EEE5A5");
+    path.setAttribute("stroke-width", "4");
+    wheel.appendChild(path);
 
-  const mid = i*SEG + SEG/2;
-  const t = document.createElementNS(NS, "text");
-  t.textContent = d.label;
-  t.setAttribute("x", C + R*0.6);
-  t.setAttribute("y", C);
-  t.setAttribute("fill", d.ink);
-  t.setAttribute("text-anchor", "middle");
-  t.setAttribute("dominant-baseline", "central");
-  // flip labels on the left half so they never read upside down
-  const flip = mid > 180 ? ` rotate(180 ${C + R*0.6} ${C})` : "";
-  t.setAttribute("transform", `rotate(${mid - 90} ${C} ${C})${flip}`);
-  wheel.appendChild(t);
-});
-// rim bulbs
-for (let k = 0; k < DATA.length * 2; k++){
-  const [x,y] = pt(k * SEG/2, R - 9);
-  const b = document.createElementNS(NS, "circle");
-  b.setAttribute("cx", x); b.setAttribute("cy", y); b.setAttribute("r", 4.5);
-  b.setAttribute("fill", k % 2 ? "#EEE5A5" : "#1D1B26");
-  wheel.appendChild(b);
+    const mid = i*SEG + SEG/2;
+    const t = document.createElementNS(NS, "text");
+    t.textContent = d.label;
+    t.setAttribute("x", C + R*0.6);
+    t.setAttribute("y", C);
+    t.setAttribute("fill", d.ink);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("dominant-baseline", "central");
+    // flip labels on the left half so they never read upside down
+    const flip = mid > 180 ? ` rotate(180 ${C + R*0.6} ${C})` : "";
+    t.setAttribute("transform", `rotate(${mid - 90} ${C} ${C})${flip}`);
+    wheel.appendChild(t);
+  });
+  // rim bulbs
+  for (let k = 0; k < data.length * 2; k++){
+    const [x,y] = pt(k * SEG/2, R - 9);
+    const b = document.createElementNS(NS, "circle");
+    b.setAttribute("cx", x); b.setAttribute("cy", y); b.setAttribute("r", 4.5);
+    b.setAttribute("fill", k % 2 ? "#EEE5A5" : "#1D1B26");
+    wheel.appendChild(b);
+  }
 }
 
 /* ---------- Elements ---------- */
@@ -593,6 +758,44 @@ const spinBtn = $("spinBtn"), slot = $("slot"), printer = $("printer"),
       actions = $("actions"), sheet = $("sheet"), chip = $("chip"), toast = $("toast");
 
 let rotation = 0, spinning = false, current = null;
+
+/* ---------- Flavour picker ---------- */
+const flavours = $("flavours");
+Object.entries(MODES).forEach(([key, m]) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "flavour"; b.dataset.mode = key;
+  b.setAttribute("aria-pressed", "false");
+  b.style.setProperty("--swatch", m.swatch);
+  b.innerHTML = `<span class="emo" aria-hidden="true"></span><span class="txt"><span class="name"></span><span class="tag"></span><span class="eg"></span></span>`;
+  b.querySelector(".emo").textContent = m.emoji;
+  b.querySelector(".name").textContent = m.name;
+  b.querySelector(".tag").textContent = m.tagline;
+  b.querySelector(".eg").textContent = m.eg;
+  b.addEventListener("click", () => { if (!spinning) setMode(key); });
+  $("flavourRow").appendChild(b);
+});
+
+function setMode(key, opts = {}){
+  MODE = modeOf(key);
+  const m = MODES[MODE];
+  document.querySelectorAll(".flavour").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === MODE)));
+  document.documentElement.style.setProperty("--bg", m.bg);
+  $("themeColor").setAttribute("content", m.bg);
+  buildWheel();
+  if (!opts.keepReceipt){
+    hideReceipt(); chip.classList.remove("show"); current = null;
+    $("sub").textContent = "Put a Positive Spin on someone's day.";
+  }
+  const first = $("app").hidden;
+  $("app").hidden = false;
+  flavours.classList.add("compact");
+  flavours.setAttribute("aria-label", "Change flavour");
+  placeBurst();
+  if (first && !opts.keepReceipt){
+    document.querySelector(".wheel-wrap").scrollIntoView({ behavior:"smooth", block:"center" });
+    setTimeout(() => spinBtn.focus({ preventScroll:true }), 400);
+  }
+}
 
 /* ---------- Local storage helper (this device only, never sent anywhere) ---------- */
 const store = {
@@ -603,8 +806,8 @@ const readList = k => { try{ const v = JSON.parse(store.get(k) || "[]"); return 
 
 /* ---------- No repeats ----------
    Works like a shuffled deck per device: you only get compliments you haven't seen,
-   the wheel avoids the last 3 categories, and once everything has been seen the deck
-   reshuffles (still avoiding your 10 most recent). Each compliment's ID is a short hash
+   the wheel avoids the last 3 categories, and once everything in a flavour has been seen
+   it reshuffles (still avoiding your 10 most recent). Each compliment's ID is a short hash
    of its text, so adding, removing or reordering compliments never scrambles anyone's list. */
 function cid(t){ let h = 5381; for (const ch of t) h = ((h << 5) + h + ch.codePointAt(0)) | 0; return (h >>> 0).toString(36); }
 const memory = {
@@ -626,10 +829,11 @@ const memory = {
 };
 
 function pickCompliment(){
+  const data = cats();
   const unseen = (cat) => cat.items.filter(t => !memory.seen.has(cid(t)));
   const build = (avoidRecent) => {
     const out = [];
-    DATA.forEach((cat, i) => {
+    data.forEach((cat, i) => {
       if (avoidRecent && memory.recent.includes(cat.label)) return;
       unseen(cat).forEach(t => out.push({ i, t }));
     });
@@ -638,7 +842,10 @@ function pickCompliment(){
   let pool = build(true);
   if (!pool.length) pool = build(false);
   if (!pool.length){
-    memory.seen = new Set(memory.last);   // fresh deck, minus the most recent few
+    // this flavour is used up: forget it (keeping the most recent few) and reshuffle
+    const ids = new Set(data.flatMap(cat => cat.items.map(cid)));
+    memory.seen = new Set([...memory.seen].filter(id => !ids.has(id) || memory.last.includes(id)));
+    memory.save();
     pool = build(true);
     if (!pool.length) pool = build(false);
   }
@@ -647,15 +854,7 @@ function pickCompliment(){
 
 /* ---------- Link encoding ---------- */
 const clip = (v, n) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, n) : "");
-function encode(c){
-  const o = { t: c.t, k: c.k };
-  if (c.to) o.to = c.to;
-  if (c.fr) o.fr = c.fr;
-  if (c.n)  o.n  = c.n;
-  const s = btoa(unescape(encodeURIComponent(JSON.stringify(o))));
-  return s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-}
-function decode(str){
+function decode(str){   // very old long links
   try{
     let s = str.replace(/-/g,"+").replace(/_/g,"/");
     while (s.length % 4) s += "=";
@@ -663,30 +862,41 @@ function decode(str){
     if (typeof o.t !== "string" || !o.t.trim()) return null;
     return {
       t: o.t.slice(0,280),
-      k: clip(o.k, 24) || "COMPLIMENT",
+      k: clip(o.k, 24) || "COMPLIMENT", m: "friendly",
       to: clip(o.to, 30), fr: clip(o.fr, 30), n: clip(o.n, 120)
     };
   }catch(e){ return null; }
 }
-/* Short links: the compliment travels as its short ID; names and note as plain words.
-   e.g. /?c=k3j9xq&to=Sam&fr=Alex&n=Thinking+of+you */
+/* Short links: the compliment travels as its short ID, the flavour as m (left out for
+   friendly, so older links look the same), names and note as plain words.
+   e.g. /?to=Sam&fr=Alex&m=cheeky&c=k3j9xq */
 function shareUrl(c){
   const q = new URLSearchParams();
   if (c.to) q.set("to", c.to);
   if (c.fr) q.set("fr", c.fr);
   if (c.n)  q.set("n", c.n);
+  if (c.m && c.m !== "friendly") q.set("m", c.m);
   q.set("c", cid(c.t));   // last, so the link never ends in punctuation
   return location.origin + location.pathname + "?" + q.toString().replace(/%21/g, "!").replace(/%2C/g, ",");
+}
+function findById(code, preferMode){
+  const order = [preferMode, ...Object.keys(MODES).filter(k => k !== preferMode)];
+  for (const m of order){
+    for (const cat of MODES[m].cats){
+      for (const t of cat.items) if (cid(t) === code) return { t, k: cat.label, m };
+    }
+  }
+  return null;
 }
 function readIncoming(){
   const q = new URLSearchParams(location.search), code = q.get("c");
   if (!code) return null;
-  if (code.length > 16) return decode(code);   // older long links still work
-  let found = null;
-  DATA.forEach(cat => cat.items.forEach(t => { if (!found && cid(t) === code) found = { t, k: cat.label }; }));
-  if (!found){   // compliment since retired or reworded: send a fresh one instead
-    const cat = DATA[Math.floor(Math.random() * DATA.length)];
-    found = { t: cat.items[Math.floor(Math.random() * cat.items.length)], k: cat.label };
+  if (code.length > 16) return decode(code);
+  const m = modeOf(q.get("m"));
+  let found = findById(code, m);
+  if (!found){   // compliment since retired or reworded: send a fresh one from the same flavour
+    const list = MODES[m].cats, cat = list[Math.floor(Math.random() * list.length)];
+    found = { t: cat.items[Math.floor(Math.random() * cat.items.length)], k: cat.label, m };
   }
   return { ...found, to: clip(q.get("to"), 30), fr: clip(q.get("fr"), 30), n: clip(q.get("n"), 120) };
 }
@@ -710,17 +920,21 @@ function hideReceipt(){
   sheet.classList.remove("show");
 }
 
+const edition = m => MODES[modeOf(m)].name.toUpperCase() + " EDITION";
+
 function printReceipt(c){
   current = c;
+  const mode = MODES[modeOf(c.m)];
   const now = new Date();
   $("rDate").textContent = now.toLocaleDateString("en-GB");
   $("rTime").textContent = now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
   $("rOrder").textContent = "#" + String(Math.floor(Math.random()*1e6)).padStart(6,"0");
+  $("rEdition").textContent = edition(c.m);
   $("rCat").textContent = c.k;
   $("rText").replaceChildren(Object.assign(document.createElement("span"), { textContent: c.t }));
   setPersonal(c);
   const st = $("rStamp");
-  st.textContent = STAMPS[Math.floor(Math.random()*STAMPS.length)];
+  st.textContent = mode.stamps[Math.floor(Math.random()*mode.stamps.length)];
   st.style.color = "var(--stamp)";
 
   printer.classList.add("busy");
@@ -755,20 +969,23 @@ function spin(){
   rotation += 360*6 + delta + jitter;
   wheel.style.transform = `rotate(${rotation}deg)`;
 
-  const cat = DATA[i];
-  const text = pick.t;
+  const cat = cats()[i];
+  const text = pick.t, m = MODE;
   memory.record(cat.label, text);
 
   const onEnd = (e) => {
     if (e.target !== wheel) return;
     wheel.removeEventListener("transitionend", onEnd);
-    printReceipt({ t: text, k: cat.label });
+    printReceipt({ t: text, k: cat.label, m });
   };
   wheel.addEventListener("transitionend", onEnd);
 }
 
 spinBtn.addEventListener("click", spin);
-$("againBtn").addEventListener("click", () => { window.scrollTo({top:0,behavior:"smooth"}); spin(); });
+$("againBtn").addEventListener("click", () => {
+  document.querySelector(".wheel-wrap").scrollIntoView({ behavior:"smooth", block:"center" });
+  spin();
+});
 
 /* ---------- Personalise and share ---------- */
 const composer = $("composer"), toIn = $("toName"), frIn = $("fromName"), nIn = $("noteText");
@@ -807,10 +1024,12 @@ $("cancelBtn").addEventListener("click", () => {
 });
 
 /* The message reads like the sender wrote it, and contains the compliment itself,
-   so nobody has to click a mystery link. The link is an optional extra. */
+   so nobody has to click a mystery link. The intro line tells them the flavour,
+   so a cheeky one is read as cheeky. The link is an optional extra. */
 function shareMessage(c, style){
   const quote = style === "wa" ? `*${c.t}*` : `"${c.t}"`;   // WhatsApp shows *text* in bold
-  const lines = [c.to ? `Hi ${c.to}, this one's for you:` : "This one's for you:", "", quote];
+  const intro = MODES[modeOf(c.m)].intro;
+  const lines = [c.to ? `Hi ${c.to}, ${intro.charAt(0).toLowerCase() + intro.slice(1)}` : intro, "", quote];
   if (c.n) lines.push("", c.n);
   lines.push("", "Made with love in Cape Town by Positive Spin, a free compliment wheel. Your receipt is here if you'd like to see it:");
   return lines.join("\n");
@@ -822,7 +1041,8 @@ composer.addEventListener("submit", async (e) => {
   if (current.fr) store.set("ps_from", current.fr);
   const url = shareUrl(current);
   const text = shareMessage(current);
-  const title = current.fr ? `A compliment from ${current.fr}` : "A compliment for you";
+  const flav = modeOf(current.m) === "friendly" ? "" : MODES[current.m].name.toLowerCase() + " ";
+  const title = current.fr ? `A ${flav}compliment from ${current.fr}` : `A ${flav}compliment for you`;
   // (share sheet and email get the plain-text version)
   if (navigator.share){
     try{ await navigator.share({ title, text, url }); countSend(); showToast("Sent. You just made someone's day."); return; }
@@ -853,6 +1073,10 @@ const F = {
   rubik: (w, px) => `${w} ${px}px "Rubik", system-ui, sans-serif`,
   mono:  (w, px) => `${w} ${px}px "Space Mono", ui-monospace, monospace`
 };
+function rgba(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
 function wrapLines(ctx, text, maxW){
   const words = text.split(/\s+/), lines = [];
   let line = "";
@@ -869,7 +1093,8 @@ function imageData(includeNote){
     date: $("rDate").textContent, time: $("rTime").textContent, order: $("rOrder").textContent,
     cat: current.k, text: current.t, to: current.to || "", fr: current.fr || "",
     note: includeNote ? (current.n || "") : "",
-    stamp: $("rStamp").textContent, site: $("rSite").textContent
+    stamp: $("rStamp").textContent, site: $("rSite").textContent,
+    edition: edition(current.m), bg: MODES[modeOf(current.m)].bg
   };
 }
 function drawReceipt(d){
@@ -890,7 +1115,8 @@ function drawReceipt(d){
   };
   center("★ POSITIVE SPIN ★", F.mono(700, 32), 40);
   center("FROM THE COMPLIMENT-O-MATIC", F.mono(400, 22), 32, "#8A8790");
-  center("FREE OF CHARGE SINCE FOREVER", F.mono(400, 22), 14, "#8A8790");
+  center("FREE OF CHARGE SINCE FOREVER", F.mono(400, 22), 34, "#8A8790");
+  center(d.edition, F.mono(700, 24), 14);
   rule();
   row("DATE " + d.date, "TIME " + d.time);
   row("ORDER", d.order);
@@ -947,8 +1173,8 @@ function renderStory(d){
   const { W, H } = IMG;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d");
-  // mint background + cream sunburst + fade
-  x.fillStyle = "#B6E2E2"; x.fillRect(0, 0, W, H);
+  // flavour background + cream sunburst + fade
+  x.fillStyle = d.bg; x.fillRect(0, 0, W, H);
   const cx = W/2, cy = 1060, R = 2200;
   x.fillStyle = "rgba(238,229,165,.6)";
   for (let a = 0; a < 360; a += 15){
@@ -956,7 +1182,7 @@ function renderStory(d){
     x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + R*Math.cos(r1), cy + R*Math.sin(r1)); x.lineTo(cx + R*Math.cos(r2), cy + R*Math.sin(r2)); x.closePath(); x.fill();
   }
   const g = x.createRadialGradient(cx, cy, 380, cx, cy, 1250);
-  g.addColorStop(0, "rgba(182,226,226,0)"); g.addColorStop(1, "rgba(182,226,226,1)");
+  g.addColorStop(0, rgba(d.bg, 0)); g.addColorStop(1, rgba(d.bg, 1));
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // heading
   x.textAlign = "center"; x.textBaseline = "alphabetic"; x.font = F.rubik(900, 112);
@@ -983,7 +1209,7 @@ function renderStory(d){
   return c;
 }
 function imageKey(){
-  return JSON.stringify([current.t, current.to, current.fr, $("imgNote").checked ? current.n : "", $("rOrder").textContent]);
+  return JSON.stringify([current.t, current.m, current.to, current.fr, $("imgNote").checked ? current.n : "", $("rOrder").textContent]);
 }
 async function prepareImage(){
   if (!current) return null;
@@ -1004,7 +1230,7 @@ async function prepareImage(){
     IMG.file = new File([blob], "positive-spin.png", { type: "image/png", lastModified: Date.now() });
   }catch(e){ IMG.blob = null; }
   if (IMG.pending === key) IMG.pending = "";
-  setImageButtons(!!(IMG.blob && IMG.key === imageKey()));
+  setImageButtons(!!(current && IMG.blob && IMG.key === imageKey()));
   return IMG.blob;
 }
 function setImageButtons(ready){
@@ -1074,9 +1300,10 @@ $("preview").addEventListener("click", (e) => { if (e.target.id === "preview") $
 
 
 /* ---------- Live "compliments sent" counter ----------
-   Reads one number from /api/count. Hidden until the counter is live, so the page
-   works the same without it. Counts link sends only (not image saves). */
-const counter = { el: $("counter"), num: $("counterNum"), value: null, counted: new Set() };
+   Reads a few numbers from /api/count: the total, and the split by flavour.
+   Hidden until the counter is live, so the page works the same without it.
+   Counts link sends only (not image saves). */
+const counter = { el: $("counter"), num: $("counterNum"), value: null, modes: null, counted: new Set() };
 function showCount(n, bump){
   if (typeof n !== "number" || !isFinite(n)) return;
   const from = counter.value == null ? n : counter.value;
@@ -1093,51 +1320,70 @@ function showCount(n, bump){
   requestAnimationFrame(step);
   if (bump){ counter.el.classList.remove("bump"); void counter.el.offsetWidth; counter.el.classList.add("bump"); }
 }
+function showTally(modes){
+  if (!modes || typeof modes !== "object") return;
+  counter.modes = {};
+  const el = $("tally");
+  el.replaceChildren(...Object.keys(MODES).map(k => {
+    const n = Math.max(0, Number(modes[k]) || 0);
+    counter.modes[k] = n;
+    const s = document.createElement("span");
+    s.textContent = `${MODES[k].emoji} ${n.toLocaleString("en-ZA")} ${MODES[k].name.toLowerCase()}`;
+    return s;
+  }));
+  el.hidden = false;
+}
 async function fetchCount(){
   if (!/^https?:$/.test(location.protocol)) return;
   try{
     const r = await fetch("api/count", { cache: "no-store" });
-    if (r.ok){ const j = await r.json(); showCount(j.sent, counter.value != null && j.sent > counter.value); }
+    if (r.ok){ const j = await r.json(); showCount(j.sent, counter.value != null && j.sent > counter.value); showTally(j.modes); }
   }catch(e){}
 }
 function countSend(){
   // one count per personalised compliment, however many buttons get tapped
-  const key = JSON.stringify([current.t, current.to, current.fr, current.n, $("rOrder").textContent]);
+  const m = modeOf(current.m);
+  const key = JSON.stringify([current.t, m, current.to, current.fr, current.n, $("rOrder").textContent]);
   if (counter.counted.has(key)) return;
   counter.counted.add(key);
   if (counter.value != null) showCount(counter.value + 1, true);
+  if (counter.modes){ showTally({ ...counter.modes, [m]: (counter.modes[m] || 0) + 1 }); }
   if (!/^https?:$/.test(location.protocol)) return;
-  fetch("api/count", { method: "POST", headers: { "x-positive-spin": "1" }, keepalive: true })
-    .then(r => r.ok ? r.json() : null).then(j => { if (j) showCount(j.sent, false); }).catch(() => {});
+  fetch("api/count?mode=" + encodeURIComponent(m), { method: "POST", headers: { "x-positive-spin": "1" }, keepalive: true })
+    .then(r => r.ok ? r.json() : null).then(j => { if (j){ showCount(j.sent, false); showTally(j.modes); } }).catch(() => {});
 }
 fetchCount();
 setInterval(() => { if (!document.hidden) fetchCount(); }, 15000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchCount(); });
 
+/* ---------- Keep the sunburst centred on the wheel (or the picker, before one is chosen) ---------- */
+function placeBurst(){
+  const el = $("app").hidden ? flavours : document.querySelector(".wheel-wrap");
+  const r = el.getBoundingClientRect();
+  document.body.style.setProperty("--by", Math.round(r.top + scrollY + r.height/2) + "px");
+}
+addEventListener("resize", placeBurst);
+document.fonts && document.fonts.ready.then(placeBurst);
+
 /* ---------- Arriving from a shared link ---------- */
 const received = readIncoming();
 if (received){
+  setMode(received.m, { keepReceipt: true });
   const hey = received.to ? `Hey ${received.to}! ` : "";
   const who = received.fr || "Someone";
-  $("sub").textContent = `${hey}${who} sent you a compliment. Keep it going by spinning for someone else.`;
+  const flav = received.m === "friendly" ? "" : MODES[received.m].name.toLowerCase() + " ";
+  $("sub").textContent = `${hey}${who} sent you a ${flav}compliment. Keep it going by spinning for someone else.`;
   chip.textContent = received.fr ? `💌 ${received.fr} wanted you to have this` : "💌 Someone wanted you to have this";
   chip.classList.add("show");
   memory.record(null, received.t);   // a compliment you've received counts as seen
   spinning = true; spinBtn.disabled = true;
   setTimeout(() => printReceipt(received), 500);
   history.replaceState(null, "", location.pathname);
+} else {
+  placeBurst();
 }
 /* ---------- Site address on the receipt (fills in once deployed) ---------- */
 if (location.host) $("rSite").textContent = location.host.replace(/^www\./,"").toUpperCase();
-
-/* ---------- Keep the sunburst centred on the wheel ---------- */
-function placeBurst(){
-  const r = document.querySelector(".wheel-wrap").getBoundingClientRect();
-  document.body.style.setProperty("--by", Math.round(r.top + scrollY + r.height/2) + "px");
-}
-placeBurst();
-addEventListener("resize", placeBurst);
-document.fonts && document.fonts.ready.then(placeBurst);
 </script>
 </body>
 </html>
